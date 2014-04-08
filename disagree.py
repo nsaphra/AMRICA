@@ -106,6 +106,11 @@ def amr_disagree_to_graph(inst, rel1, rel2, gold_inst_t, gold_rel1_t, gold_rel2_
     if (gold_ind[v], const) in gold_rel1_t:
       if reln not in gold_rel1_t[(gold_ind[v], const)]:
         edge_color = TEST_COLOR
+
+        # relns between existing nodes should be in unmatched rel2
+        gold_ind[const] = const
+        unmatched_gold_rel2[(gold_ind[v], const)] = unmatched_gold_rel1[(gold_ind[v], const)]
+        del unmatched_gold_rel1[(gold_ind[v], const)]
       else:
         unmatched_gold_rel1[(gold_ind[v], const)].remove(reln)
     else:
@@ -141,6 +146,7 @@ def amr_disagree_to_graph(inst, rel1, rel2, gold_inst_t, gold_rel1_t, gold_rel2_
       if reln == 'TOP':
         G.add_edge(v, v, label=reln, color=edge_color, font_color=edge_color)
         continue
+        
       if const not in node_hashes:
         node_hashes[const] = 'GOLD %s' % const
         G.add_node(const, color=GOLD_COLOR, font_color=GOLD_COLOR)
