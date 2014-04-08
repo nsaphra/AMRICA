@@ -10,7 +10,6 @@ from amr_metadata import AmrMeta
 from smatch import smatch
 from collections import defaultdict
 import pygraphviz as pgz
-import matplotlib.pyplot as plt
 import copy
 
 GOLD_COLOR = 'blue'
@@ -90,8 +89,8 @@ def amr_disagree_to_graph(inst, rel1, rel2, gold_inst_t, gold_rel1_t, gold_rel2_
     font_color = DFLT_COLOR
     label = instof
     if match[ind] < 0:
-      color = TEST_COLOR
-      color = TEST_COLOR
+      font_color = TEST_COLOR
+      node_color = TEST_COLOR
     else:
       if gold_inst_t[match[ind]] != instof:
         font_color = TEST_COLOR
@@ -176,7 +175,7 @@ def hilight_disagreement(gold_amr, test_amrs):
   return amr_graphs
 
 
-def main():  
+def main():
   parser = argparse.ArgumentParser(description='Generate a .dot file to '
     'easy inspection of AMR data for inter-annotator disagreement.')
   parser.add_argument('-i', '--infile',
@@ -213,6 +212,7 @@ def main():
         #vizG = nx.to_agraph(g, strict=False)
         g.layout(prog='dot')
         g.draw('%s/%s_annoted_%s_%s.png' % (args.outdir, cur_id, gold_anno, test_anno))
+
       print("ID: %s\n Sentence: %s" % (cur_id, sent))
       raw_input("Press enter to continue: ")
 
@@ -220,6 +220,7 @@ def main():
       cur_id = cur_amr.metadata['id']
 
     amrs_same_sent.append(cur_amr)
+
   infile.close()
 
 
