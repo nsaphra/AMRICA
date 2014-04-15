@@ -143,7 +143,7 @@ def amr_disagree_to_graph(inst, rel1, rel2, gold_inst_t, gold_rel1_t, gold_rel2_
     for reln in relns:
       # special case: "TOP" specifier not annotated
       if reln == 'TOP':
-        G.add_edge(v, v, label=reln, color=edge_color, font_color=edge_color)
+        G.add_edge(node_hashes[gold_ind], node_hashes[gold_ind], label=reln, color=GOLD_COLOR, font_color=GOLD_COLOR)
         continue
         
       if const not in node_hashes:
@@ -183,7 +183,7 @@ def main():
     help='amr input file')
   parser.add_argument('-o', '--outdir',
     default='../data/LDC2013E117/interannotator/deft-amr-release-r3-events37',
-    help='.dot output directory')
+    help='image output directory')
   args = parser.parse_args()
 
   infile = open(args.infile)
@@ -214,7 +214,7 @@ def main():
         g.draw('%s/%s_annoted_%s_%s.png' % (args.outdir, cur_id, gold_anno, test_anno))
 
       print("ID: %s\n Sentence: %s" % (cur_id, sent))
-      raw_input("Press enter to continue: ")
+      #raw_input("Press enter to continue: ")
 
       amrs_same_sent = []
       cur_id = cur_amr.metadata['id']

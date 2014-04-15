@@ -8,8 +8,8 @@ class AmrMeta(AMR):
                link_list=None, const_link_list=None,
                base_amr=None, metadata={}):
     if base_amr is None:
-      super(AmrMetadata, self).__init__(var_list, var_value_list, 
-                                        link_list, const_link_list)
+      super(AmrMeta, self).__init__(var_list, var_value_list, 
+                                    link_list, const_link_list)
     else:
       self.nodes = base_amr.nodes
       self.root = base_amr.root
