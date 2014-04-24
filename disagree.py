@@ -61,11 +61,6 @@ def amr_info_to_dict(inst, rel1, rel2):
 
   return (inst_t, rel1_t, rel2_t)
 
-#def add_edge_label(G, v1, v2, lbl, color=DFLT_COLOR):
-#  if G.has_edge(v1, v2):
-#    label = "%s %s" % (lbl, G.get_edge_data(v1, v2, key='label'))
-#    G.add_edge(v1, v2, label=label, color=color)
-
 
 def amr_disagree_to_graph(inst, rel1, rel2, gold_inst_t, gold_rel1_t, gold_rel2_t, match):
   """ 
@@ -75,7 +70,7 @@ def amr_disagree_to_graph(inst, rel1, rel2, gold_inst_t, gold_rel1_t, gold_rel2_
     (inst, rel1, rel2) from test amr.get_triples2()
     (gold_inst_t, gold_rel1_t, gold_rel2_t) from gold amr_info_to_dict()
   """
-  G = pgz.AGraph(strict=False, directed=True)
+  G = nx.MultiDiGraph()
   gold_ind = {} # test variable name -> gold variable index
   tablecopy = lambda x: copy.deepcopy(x) #{k:copy.copy(v) for (k,v) in x.items()}
   unmatched_gold_inst = tablecopy(gold_inst_t)
@@ -119,7 +114,7 @@ def amr_disagree_to_graph(inst, rel1, rel2, gold_inst_t, gold_rel1_t, gold_rel2_
     if reln == 'TOP':
       G.add_edge(v, v, label=reln, color=edge_color, font_color=edge_color)
       continue
-    G.add_node(const, color=node_color, font_color=node_color)
+    G.add_node(const, label=const, color=node_color, font_color=node_color)
     G.add_edge(v, const, label=reln, color=edge_color, font_color=edge_color)
 
   for (reln, v1, v2) in rel2:
@@ -148,7 +143,7 @@ def amr_disagree_to_graph(inst, rel1, rel2, gold_inst_t, gold_rel1_t, gold_rel2_
         
       if const not in node_hashes:
         node_hashes[const] = 'GOLD %s' % const
-        G.add_node(const, color=GOLD_COLOR, font_color=GOLD_COLOR)
+        G.add_node(const, label=const, color=GOLD_COLOR, font_color=GOLD_COLOR)
       G.add_edge(node_hashes[gold_ind], const, label=reln, color=GOLD_COLOR, font_color=GOLD_COLOR)
   for ((gold_ind1, gold_ind2), relns) in unmatched_gold_rel2.items():
     for reln in relns:
@@ -209,9 +204,9 @@ def main():
       for (a, g) in zip(test_amrs, amr_graphs):
         test_anno = a.metadata['annotator']
 
-        #vizG = nx.to_agraph(g, strict=False)
-        g.layout(prog='dot')
-        g.draw('%s/%s_annoted_%s_%s.png' % (args.outdir, cur_id, gold_anno, test_anno))
+        ag = nx.to_agraph(g)
+        ag.layout(prog='dot')
+        ag.draw('%s/%s_annoted_%s_%s.png' % (args.outdir, cur_id, gold_anno, test_anno))
 
       print("ID: %s\n Sentence: %s" % (cur_id, sent))
       #raw_input("Press enter to continue: ")
