@@ -3,7 +3,12 @@ Author: Naomi Saphra (nsaphra@jhu.edu)
 
 A tool for inspecting AMR data to id patterns of inter-annotator disagreement.
 """
-
+# TODO deal with constant name dupes
+# TODO TOP for different-instance-names nodes should have same edge
+# TODO stats: edges in diff dir?
+# TODO stats: diff edge names?
+# TODO stats: diff node instance names
+# TODO stats: alt edge crosses node?
 import argparse
 import networkx as nx
 from amr_metadata import AmrMeta
@@ -170,6 +175,25 @@ def hilight_disagreement(gold_amr, test_amrs):
   return amr_graphs
 
 
+def edge_agrees(e):
+  # TODO handle instance label disagreement
+  return e['color'] == DFLT_COLOR
+
+
+def disagree_stats_edges(g):
+  total_edges = len(g.edges())
+  total_disagree = 0
+  disagree_labels = defaultdict(int)
+  for (v1, v2, dat) in g.edges(data=True):
+    if edge_agrees(dat):
+      continue
+    total_disagree += 1
+    disagree_labels[dat['label']] += 1
+
+
+
+
+
 def main():
   parser = argparse.ArgumentParser(description='Generate a .dot file to '
     'easy inspection of AMR data for inter-annotator disagreement.')
@@ -203,6 +227,8 @@ def main():
 
       for (a, g) in zip(test_amrs, amr_graphs):
         test_anno = a.metadata['annotator']
+
+        disagree_stats_edges(g)
 
         ag = nx.to_agraph(g)
         ag.layout(prog='dot')
