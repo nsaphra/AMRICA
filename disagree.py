@@ -5,10 +5,6 @@ A tool for inspecting AMR data to id patterns of inter-annotator disagreement.
 """
 # TODO deal with constant name dupes
 # TODO TOP for different-instance-names nodes should have same edge
-# TODO stats: edges in diff dir?
-# TODO stats: diff edge names?
-# TODO stats: diff node instance names
-# TODO stats: alt edge crosses node?
 import argparse
 import networkx as nx
 from amr_metadata import AmrMeta
@@ -51,7 +47,6 @@ def amr_info_to_dict(inst, rel1, rel2):
     node_inds[v] = ind
     inst_t[ind] = label
 
-  #TODO are multiple edges between two vars allowed?
   rel1_t = {}
   for (label, v1, const) in rel1:
     if (node_inds[v1], const) not in rel1_t:
@@ -189,9 +184,6 @@ def disagree_stats_edges(g):
       continue
     total_disagree += 1
     disagree_labels[dat['label']] += 1
-
-
-
 
 
 def main():
