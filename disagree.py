@@ -71,11 +71,11 @@ def amr_info_to_dict(inst, rel1, rel2):
 
 def amr_disagree_to_graph(inst, rel1, rel2, gold_inst_t, gold_rel1_t, gold_rel2_t, match):
   """ 
-  Graph of test AMR / gold AMR union, with hilighted disagreements for 
-  different labels on edges and nodes, unmatched nodes and edges.
   Input:
     (inst, rel1, rel2) from test amr.get_triples2()
     (gold_inst_t, gold_rel1_t, gold_rel2_t) from gold amr_info_to_dict()
+  Returns graph of test AMR / gold AMR union, with hilighted disagreements for
+  different labels on edges and nodes, unmatched nodes and edges.
   """
   G = nx.MultiDiGraph()
   gold_ind = {} # test variable name -> gold variable index
@@ -159,6 +159,13 @@ def amr_disagree_to_graph(inst, rel1, rel2, gold_inst_t, gold_rel1_t, gold_rel2_
 
 
 def hilight_disagreement(gold_amr, test_amrs):
+  """
+  Input:
+    gold_amr: gold AMR object
+    test_amrs: list of AMRs to compare to
+  Returns list of disagreement graphs for each gold-test AMR pair.
+  """
+
   amr_graphs = []
   gold_label="b"
   gold_amr.rename_node(gold_label)
