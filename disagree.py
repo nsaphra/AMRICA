@@ -203,9 +203,7 @@ def main():
   parser.add_argument('-o', '--outdir',
     default='../data/LDC2013E117/interannotator/deft-amr-release-r3-events37',
     help='image output directory')
-  parser.add_argument('-v', '--verbose',
-    default=True,
-    help='Print each sentence as we process it.')
+  parser.add_argument('-v', '--verbose', action='store_true')
   # TODO make interactive option and option to process a specific range
   args = parser.parse_args()
 
@@ -238,7 +236,8 @@ def main():
         ag.layout(prog='dot')
         ag.draw('%s/%s_annoted_%s_%s.png' % (args.outdir, cur_id, gold_anno, test_anno))
 
-      print("ID: %s\n Sentence: %s" % (cur_id, sent))
+      if (args.verbose):
+        print("ID: %s\n Sentence: %s" % (cur_id, sent))
       #raw_input("Press enter to continue: ")
 
       amrs_same_sent = []
