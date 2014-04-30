@@ -1,10 +1,18 @@
+#!/usr/bin/env python
 """
 Author: Naomi Saphra (nsaphra@jhu.edu)
 
 A tool for inspecting AMR data to id patterns of inter-annotator disagreement.
+AMR input file expected in format where comments above each annotation indicate
+the sentence like so:
+
+# ::id DF-170-181103-888_2097.1 ::date 2013-09-16T07:15:31 ::annotator ANON-01 ::preferred
+# ::snt This is a sentence.
 """
+
 # TODO deal with constant name dupes
 # TODO TOP for different-instance-names nodes should have same edge
+# TODO multiline sentences don't print right
 import argparse
 import networkx as nx
 from amr_metadata import AmrMeta
@@ -16,7 +24,6 @@ import copy
 GOLD_COLOR = 'blue'
 TEST_COLOR = 'red'
 DFLT_COLOR = 'black'
-
 
 def get_amr_line(infile):
   """ Read an entry from the input file. AMRs are separated by blank lines. """
@@ -140,7 +147,7 @@ def amr_disagree_to_graph(inst, rel1, rel2, gold_inst_t, gold_rel1_t, gold_rel2_
       if reln == 'TOP':
         G.add_edge(node_hashes[gold_ind], node_hashes[gold_ind], label=reln, color=GOLD_COLOR, font_color=GOLD_COLOR)
         continue
-        
+
       if const not in node_hashes:
         node_hashes[const] = 'GOLD %s' % const
         G.add_node(const, label=const, color=GOLD_COLOR, font_color=GOLD_COLOR)
@@ -187,14 +194,19 @@ def disagree_stats_edges(g):
 
 
 def main():
-  parser = argparse.ArgumentParser(description='Generate a .dot file to '
-    'easy inspection of AMR data for inter-annotator disagreement.')
+  parser = argparse.ArgumentParser(description='Generate a .dot file for '
+    'easy inspection of AMR data for inter-annotator disagreement. '
+    'Usage: ./disagree.py -i all_amrs.txt -o png_dir/')
   parser.add_argument('-i', '--infile',
     default='../data/LDC2013E117/deft-amr-release-r3-events37.txt',
     help='amr input file')
   parser.add_argument('-o', '--outdir',
     default='../data/LDC2013E117/interannotator/deft-amr-release-r3-events37',
     help='image output directory')
+  parser.add_argument('-v', '--verbose',
+    default=True,
+    help='Print each sentence as we process it.')
+  # TODO make interactive option and option to process a specific range
   args = parser.parse_args()
 
   infile = open(args.infile)
