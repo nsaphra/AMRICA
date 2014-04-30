@@ -1,4 +1,8 @@
 #!/usr/bin/env python
+"""
+Author: Naomi Saphra (nsaphra@jhu.edu)
+Read AMR file in while also processing metadata in comments
+"""
 
 from smatch.amr import AMR
 import re
