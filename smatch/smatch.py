@@ -26,6 +26,24 @@ ERROR_LOG=sys.stderr
 
 match_num_dict={} #key: match number tuples	value: the matching number
 
+W_CLASSIC = 0 # Smatch classic-style weighting flag, 1 for each rel/inst that matches perfectly
+W_XLANG = 1 # Cross-language weighting, translation model probs
+weighter_flag = W_CLASSIC
+
+def tm_score(test_label, gold_label):
+  raise NotImplementedError, "Chill, I'll get to it"
+
+def weight_label_match(test_label, gold_label):
+  """ Return score corresponding to the weight to add for matching this triple """
+  if weighter_flag == W_CLASSIC:
+    if test_label.lower() == gold_label.lower():
+      return 1.0
+    else:
+      return 0.0
+
+  if weighter_flag == W_XLANG:
+    return tm_score(test_label, gold_label)
+
 def get_amr_line(input_f):
     """Read the amr file. AMRs are separated by a blank line."""
     cur_amr=[]
@@ -75,7 +93,7 @@ def compute_pool(test_instance,test_relation1,test_relation2,gold_instance,gold_
     """
     compute the possible variable matching candidate (the match which may result in 1)
     Args:
-      test_instance: intance triples in AMR 1
+      test_instance: instance triples in AMR 1
       test_relation1: relation triples which contain only one variable in AMR 1
       test_relation2: relation triples which contain two variables in AMR 1
       gold_instance: instance triples in AMR 2
@@ -98,65 +116,68 @@ def compute_pool(test_instance,test_relation1,test_relation2,gold_instance,gold_
       candidate_match.append(set())
     for i in range(0,len_test_inst):
       for j in range(0,len_gold_inst):
-        if test_instance[i][0].lower()==gold_instance[j][0].lower() and test_instance[i][2].lower()==gold_instance[j][2].lower():
-           var1_num=int(test_instance[i][1][len(test_label):])
-           var2_num=int(gold_instance[j][1][len(gold_label):])
-           candidate_match[var1_num].add(var2_num)
-           cur_k=(var1_num,var2_num)
-           if cur_k in weight_dict:
-              weight_dict[cur_k][-1]+=1
-           else:
-              weight_dict[cur_k]={}
-              weight_dict[cur_k][-1]=1
+        if test_instance[i][0].lower() == gold_instance[j][0].lower():
+          w = weight_label_match(test_instance[i][2], gold_instance[j][2])
+          var1_num=int(test_instance[i][1][len(test_label):])
+          var2_num=int(gold_instance[j][1][len(gold_label):])
+          candidate_match[var1_num].add(var2_num)
+          cur_k=(var1_num,var2_num)
+          if cur_k in weight_dict:
+            weight_dict[cur_k][-1]+=w
+          else:
+            weight_dict[cur_k]={}
+            weight_dict[cur_k][-1]=w
     for i in range(0,len_test_rel1):
       for j in range(0,len_gold_rel1):
-        if test_relation1[i][0].lower()==gold_relation1[j][0].lower() and test_relation1[i][2].lower()==gold_relation1[j][2].lower():
-           var1_num=int(test_relation1[i][1][len(test_label):])
-           var2_num=int(gold_relation1[j][1][len(gold_label):])
-           candidate_match[var1_num].add(var2_num)
-           cur_k=(var1_num,var2_num)
-           if cur_k in weight_dict:
-              weight_dict[cur_k][-1]+=1
-           else:
-              weight_dict[cur_k]={}
-              weight_dict[cur_k][-1]=1
+        if test_relation1[i][0].lower() == gold_relation1[j][0].lower():
+          w = weight_label_match(test_relation1[i][2], gold_relation1[j][2])
+          var1_num=int(test_relation1[i][1][len(test_label):])
+          var2_num=int(gold_relation1[j][1][len(gold_label):])
+          candidate_match[var1_num].add(var2_num)
+          cur_k=(var1_num,var2_num)
+          if cur_k in weight_dict:
+            weight_dict[cur_k][-1]+=w
+          else:
+            weight_dict[cur_k]={}
+            weight_dict[cur_k][-1]=w
+
     for i in range(0,len_test_rel2):
       for j in range(0,len_gold_rel2):
         if test_relation2[i][0].lower()==gold_relation2[j][0].lower():
-           var1_num_test=int(test_relation2[i][1][len(test_label):])
-           var1_num_gold=int(gold_relation2[j][1][len(gold_label):])
-           var2_num_test=int(test_relation2[i][2][len(test_label):])
-           var2_num_gold=int(gold_relation2[j][2][len(gold_label):])
-           candidate_match[var1_num_test].add(var1_num_gold)
-           candidate_match[var2_num_test].add(var2_num_gold)
-           cur_k1=(var1_num_test,var1_num_gold)
-           cur_k2=(var2_num_test,var2_num_gold)
-           if cur_k2!=cur_k1:
-              if cur_k1 in weight_dict:
-                 if cur_k2 in weight_dict[cur_k1]:
-                    weight_dict[cur_k1][cur_k2]+=1
-                 else:
-                    weight_dict[cur_k1][cur_k2]=1
-              else:
-                 weight_dict[cur_k1]={}
-                 weight_dict[cur_k1][-1]=0
-                 weight_dict[cur_k1][cur_k2]=1
-              if cur_k2 in weight_dict:
-                 if cur_k1 in weight_dict[cur_k2]:
-                    weight_dict[cur_k2][cur_k1]+=1
-                 else:
-                      weight_dict[cur_k2][cur_k1]=1
-              else:
-                 weight_dict[cur_k2]={}
-                 weight_dict[cur_k2][-1]=0
-                 weight_dict[cur_k2][cur_k1]=1
-           else:
-              #cycle
-              if cur_k1 in weight_dict:
-                 weight_dict[cur_k1][-1]+=1
-              else:
-                 weight_dict[cur_k1]={}
-                 weight_dict[cur_k1][-1]=1
+          var1_num_test=int(test_relation2[i][1][len(test_label):])
+          var1_num_gold=int(gold_relation2[j][1][len(gold_label):])
+          var2_num_test=int(test_relation2[i][2][len(test_label):])
+          var2_num_gold=int(gold_relation2[j][2][len(gold_label):])
+          candidate_match[var1_num_test].add(var1_num_gold)
+          candidate_match[var2_num_test].add(var2_num_gold)
+          cur_k1=(var1_num_test,var1_num_gold)
+          cur_k2=(var2_num_test,var2_num_gold)
+          if cur_k2!=cur_k1:
+            if cur_k1 in weight_dict:
+               if cur_k2 in weight_dict[cur_k1]:
+                  weight_dict[cur_k1][cur_k2]+=1
+               else:
+                  weight_dict[cur_k1][cur_k2]=1
+            else:
+               weight_dict[cur_k1]={}
+               weight_dict[cur_k1][-1]=0
+               weight_dict[cur_k1][cur_k2]=1
+            if cur_k2 in weight_dict:
+               if cur_k1 in weight_dict[cur_k2]:
+                  weight_dict[cur_k2][cur_k1]+=1
+               else:
+                    weight_dict[cur_k2][cur_k1]=1
+            else:
+               weight_dict[cur_k2]={}
+               weight_dict[cur_k2][-1]=0
+               weight_dict[cur_k2][cur_k1]=1
+          else:
+            #cycle
+            if cur_k1 in weight_dict:
+               weight_dict[cur_k1][-1]+=1
+            else:
+               weight_dict[cur_k1]={}
+               weight_dict[cur_k1][-1]=1
     return (candidate_match, weight_dict) 
 
 def init_match(candidate_match,test_instance,gold_instance):
