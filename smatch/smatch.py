@@ -26,24 +26,6 @@ ERROR_LOG=sys.stderr
 
 match_num_dict={} #key: match number tuples	value: the matching number
 
-W_CLASSIC = 0 # Smatch classic-style weighting flag, 1 for each rel/inst that matches perfectly
-W_XLANG = 1 # Cross-language weighting, translation model probs
-weighter_flag = W_CLASSIC
-
-def tm_score(test_label, gold_label):
-  raise NotImplementedError, "Chill, I'll get to it"
-
-def weight_label_match(test_label, gold_label):
-  """ Return score corresponding to the weight to add for matching this triple """
-  if weighter_flag == W_CLASSIC:
-    if test_label.lower() == gold_label.lower():
-      return 1.0
-    else:
-      return 0.0
-
-  if weighter_flag == W_XLANG:
-    return tm_score(test_label, gold_label)
-
 def get_amr_line(input_f):
     """Read the amr file. AMRs are separated by a blank line."""
     cur_amr=[]
@@ -87,9 +69,19 @@ def build_arg_parser2():
     parser.add_option('--pr',"--precision_recall",action='store_true',dest="pr",help="Output precision and recall as well as the f-score. Default: false")
     parser.set_defaults(r=4,v=False,ms=False,pr=False) 
     return parser
- 
 
-def compute_pool(test_instance,test_relation1,test_relation2,gold_instance,gold_relation1,gold_relation2,test_label,gold_label):
+def dflt_label_weighter(test_label, gold_label):
+  """
+  Return score corresponding to the weight to add for matching
+  test_label and gold_label in the default Smatch setting.
+  """
+  if test_label.lower() == gold_label.lower():
+    return 1.0
+  else:
+    return 0.0
+
+def compute_pool(test_instance,test_relation1,test_relation2,gold_instance,gold_relation1,gold_relation2,test_label,gold_label,
+  const_weight_fn, instance_weight_fn):
     """
     compute the possible variable matching candidate (the match which may result in 1)
     Args:
@@ -117,7 +109,7 @@ def compute_pool(test_instance,test_relation1,test_relation2,gold_instance,gold_
     for i in range(0,len_test_inst):
       for j in range(0,len_gold_inst):
         if test_instance[i][0].lower() == gold_instance[j][0].lower():
-          w = weight_label_match(test_instance[i][2], gold_instance[j][2])
+          w = instance_weight_fn(test_instance[i][2], gold_instance[j][2])
           var1_num=int(test_instance[i][1][len(test_label):])
           var2_num=int(gold_instance[j][1][len(gold_label):])
           candidate_match[var1_num].add(var2_num)
@@ -130,7 +122,7 @@ def compute_pool(test_instance,test_relation1,test_relation2,gold_instance,gold_
     for i in range(0,len_test_rel1):
       for j in range(0,len_gold_rel1):
         if test_relation1[i][0].lower() == gold_relation1[j][0].lower():
-          w = weight_label_match(test_relation1[i][2], gold_relation1[j][2])
+          w = const_weight_fn(test_relation1[i][2], gold_relation1[j][2])
           var1_num=int(test_relation1[i][1][len(test_label):])
           var2_num=int(gold_relation1[j][1][len(gold_label):])
           candidate_match[var1_num].add(var2_num)
@@ -478,7 +470,8 @@ def get_best_gain(match,candidate_match,weight_dict,gold_len,start_match_num):
     
     
 
-def get_fh(test_instance,test_relation1,test_relation2,gold_instance,gold_relation1,gold_relation2,test_label,gold_label):
+def get_fh(test_instance,test_relation1,test_relation2,gold_instance,gold_relation1,gold_relation2,test_label,gold_label,
+  const_weight_fn=dflt_label_weighter, instance_weight_fn=dflt_label_weighter):
     """Get the f-score given two sets of triples
        Args:
            iter_num: iteration number of heuristic search
@@ -495,7 +488,8 @@ def get_fh(test_instance,test_relation1,test_relation2,gold_instance,gold_relati
            best_match_num: the highest matching number
           """ 
     #compute candidate pool
-    (candidate_match,weight_dict)=compute_pool(test_instance,test_relation1,test_relation2,gold_instance,gold_relation1,gold_relation2,test_label,gold_label)
+    (candidate_match,weight_dict)=compute_pool(test_instance,test_relation1,test_relation2,gold_instance,gold_relation1,gold_relation2,test_label,gold_label,
+      const_weight_fn, instance_weight_fn)
     best_match_num=0
     best_match=[-1]*len(test_instance)
     for i in range(0,iter_num):
