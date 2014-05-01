@@ -2,12 +2,18 @@
 """
 Author: Naomi Saphra (nsaphra@jhu.edu)
 
-A tool for inspecting AMR data to id patterns of inter-annotator disagreement.
+A tool for inspecting AMR data to id patterns of inter-annotator disagreement
+or semantic inequivalence.
+
 AMR input file expected in format where comments above each annotation indicate
 the sentence like so:
 
 # ::id DF-170-181103-888_2097.1 ::date 2013-09-16T07:15:31 ::annotator ANON-01 ::preferred
 # ::snt This is a sentence.
+
+For monolingual disagreement, all annotations of some sentence should occur
+consecutively in the monolingual annotation file. For bilingual, annotations
+should be in the same order of sentences between the files.
 """
 
 # TODO deal with constant name dupes
@@ -184,20 +190,7 @@ def hilight_disagreement(gold_amr, test_amrs):
   return amr_graphs
 
 
-def main():
-  parser = argparse.ArgumentParser(description='Generate a .dot file for '
-    'easy inspection of AMR data for inter-annotator disagreement. '
-    'Usage: ./disagree.py -i all_amrs.txt -o png_dir/')
-  parser.add_argument('-i', '--infile',
-    default='../data/LDC2013E117/deft-amr-release-r3-events37.txt',
-    help='amr input file')
-  parser.add_argument('-o', '--outdir',
-    default='../data/LDC2013E117/interannotator/deft-amr-release-r3-events37',
-    help='image output directory')
-  parser.add_argument('-v', '--verbose', action='store_true')
-  # TODO make interactive option and option to process a specific range
-  args = parser.parse_args()
-
+def monolingual_main(args):
   infile = open(args.infile)
   amrs_same_sent = []
   cur_id = ""
@@ -236,6 +229,23 @@ def main():
 
   infile.close()
 
-
 if __name__ == '__main__':
-  main()
+  parser = argparse.ArgumentParser(description='Generate a .dot file for '
+    'easy inspection of AMR data for inter-annotator disagreement. '
+    'Usage: ./disagree.py -i all_amrs.txt -o png_dir/')
+  parser.add_argument('-i', '--infile',
+    default='../data/LDC2013E117/deft-amr-release-r3-events37.txt',
+    help='amr input file')
+  parser.add_argument('-o', '--outdir',
+    default='../data/LDC2013E117/interannotator/deft-amr-release-r3-events37',
+    help='image output directory')
+  parser.add_argument('-v', '--verbose', action='store_true')
+  parser.add_argument('-b', '--bitext', action='store_true',
+    help='Input source and target language bitext AMRs instead.')
+  # TODO make interactive option and option to process a specific range
+  args = parser.parse_args()
+
+  if (args.bitext):
+    raise NotImplementedError
+  else:
+    monolingual_main(args)

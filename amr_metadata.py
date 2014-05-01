@@ -33,3 +33,6 @@ class AmrMeta(AMR):
 
     base_amr = AMR.parse_AMR_line(annotation_line)
     return cls(base_amr=base_amr, metadata=metadata)
+
+  def add_alignment_weights():
+    raise NotImplementedError
