@@ -6,6 +6,8 @@ Read AMR file in while also processing metadata in comments
 
 from smatch.amr import AMR
 import re
+from pynlpl.formats.giza import GizaSentenceAlignment
+from pynlpl.common import u
 
 class AmrMeta(AMR):
   def __init__(self, var_list=None, var_value_list=None,
@@ -57,3 +59,4 @@ def get_amr_line(infile):
       has_content = True
       cur_amr.append(line.strip())
   return ("".join(cur_amr), cur_comments)
+  
