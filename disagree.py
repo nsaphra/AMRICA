@@ -26,6 +26,7 @@ from smatch import smatch
 from collections import defaultdict
 import pygraphviz as pgz
 import copy
+import ConfigParser
 
 GOLD_COLOR = 'blue'
 TEST_COLOR = 'red'
@@ -230,20 +231,32 @@ def monolingual_main(args):
   infile.close()
 
 if __name__ == '__main__':
-  parser = argparse.ArgumentParser(description='Generate a .dot file for '
-    'easy inspection of AMR data for inter-annotator disagreement. '
-    'Usage: ./disagree.py -i all_amrs.txt -o png_dir/')
-  parser.add_argument('-i', '--infile',
-    default='../data/LDC2013E117/deft-amr-release-r3-events37.txt',
-    help='amr input file')
-  parser.add_argument('-o', '--outdir',
-    default='../data/LDC2013E117/interannotator/deft-amr-release-r3-events37',
-    help='image output directory')
+  conf_parser = argparse.ArgumentParser(add_help=False)
+  conf_parser.add_argument("-c", "--conf_file",
+    help="Specify config file", metavar="FILE")
+  args, remaining_argv = conf_parser.parse_known_args()
+  defaults = {}
+  if args.conf_file:
+    config = ConfigParser.SafeConfigParser()
+    config.read([args.conf_file])
+    defaults = dict(config.items("Defaults"))
+
+  parser = argparse.ArgumentParser(
+    parents=[conf_parser],
+    description='Generate a graphviz png files for '
+    'easy inspection of AMR data for inter-annotator disagreement.\n'
+    'Usage: ./disagree.py -i all_amrs.txt -o png_dir/\n'
+    '(Or specify config file with -c)',
+    formatter_class=argparse.RawDescriptionHelpFormatter,
+  )
+  parser.set_defaults(**defaults)
+  parser.add_argument('-i', '--infile', help='amr input file')
+  parser.add_argument('-o', '--outdir', help='image output directory')
   parser.add_argument('-v', '--verbose', action='store_true')
   parser.add_argument('-b', '--bitext', action='store_true',
-    help='Input source and target language bitext AMRs instead.')
+    help='Input source and target language bitext AMRs.')
   # TODO make interactive option and option to process a specific range
-  args = parser.parse_args()
+  args = parser.parse_args(remaining_argv)
 
   if (args.bitext):
     raise NotImplementedError
