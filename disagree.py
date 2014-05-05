@@ -21,7 +21,7 @@ should be in the same order of sentences between the files.
 # TODO multiline sentences don't print right
 import argparse
 import networkx as nx
-from amr_metadata import AmrMeta
+import amr_metadata
 from smatch import smatch
 from collections import defaultdict
 import pygraphviz as pgz
@@ -31,27 +31,6 @@ import ConfigParser
 GOLD_COLOR = 'blue'
 TEST_COLOR = 'red'
 DFLT_COLOR = 'black'
-
-def get_amr_line(infile):
-  """ Read an entry from the input file. AMRs are separated by blank lines. """
-  cur_comments = []
-  cur_amr = []
-  has_content = False
-  for line in infile:
-    if line[0] == "(" and len(cur_amr) != 0:
-      cur_amr = []
-    if line.strip() == "":
-      if not has_content:
-        continue
-      else:
-        break
-    elif line.strip().startswith("#"):
-      cur_comments.append(line.strip())
-    else:
-      has_content = True
-      cur_amr.append(line.strip())
-  return ("".join(cur_amr), cur_comments)
-
 
 def amr_info_to_dict(inst, rel1, rel2):
   """ Get tables of AMR data indexed by variable number """
@@ -196,10 +175,10 @@ def monolingual_main(args):
   amrs_same_sent = []
   cur_id = ""
   while True:
-    (amr_line, comments) = get_amr_line(infile)
+    (amr_line, comments) = amr_metadata.get_amr_line(infile)
     if amr_line == "":
       break
-    cur_amr = AmrMeta.from_parse(amr_line, comments)
+    cur_amr = amr_metadata.AmrMeta.from_parse(amr_line, comments)
     assert 'id' in cur_amr.metadata and 'annotator' in cur_amr.metadata
     if not cur_id:
       cur_id = cur_amr.metadata['id']

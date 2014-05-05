@@ -36,3 +36,24 @@ class AmrMeta(AMR):
 
   def add_alignment_weights():
     raise NotImplementedError
+
+
+def get_amr_line(infile):
+  """ Read an entry from the input file. AMRs are separated by blank lines. """
+  cur_comments = []
+  cur_amr = []
+  has_content = False
+  for line in infile:
+    if line[0] == "(" and len(cur_amr) != 0:
+      cur_amr = []
+    if line.strip() == "":
+      if not has_content:
+        continue
+      else:
+        break
+    elif line.strip().startswith("#"):
+      cur_comments.append(line.strip())
+    else:
+      has_content = True
+      cur_amr.append(line.strip())
+  return ("".join(cur_amr), cur_comments)
