@@ -243,7 +243,7 @@ if __name__ == '__main__':
 
   parser = argparse.ArgumentParser(
     parents=[conf_parser],
-    description='Generate a graphviz png files for '
+    description='Generate graphviz png files for '
     'easy inspection of AMR data for inter-annotator disagreement.\n'
     'Usage: ./disagree.py -i all_amrs.txt -o png_dir/\n'
     '(Or specify config file with -c)',
