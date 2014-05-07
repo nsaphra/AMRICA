@@ -144,7 +144,7 @@ def amr_disagree_to_graph(inst, rel1, rel2, gold_inst_t, gold_rel1_t, gold_rel2_
   return G
 
 
-def hilight_disagreement(gold_amr, test_amrs):
+def hilight_disagreement(test_amrs, gold_amr):
   """
   Input:
     gold_amr: gold AMR object
@@ -186,7 +186,7 @@ def monolingual_main(args):
     if cur_id != cur_amr.metadata['id']:
       gold_amr = amrs_same_sent[0]
       test_amrs = amrs_same_sent[1:]
-      amr_graphs = hilight_disagreement(gold_amr, test_amrs)
+      amr_graphs = hilight_disagreement(test_amrs, gold_amr)
 
       gold_anno = gold_amr.metadata['annotator']
       sent = gold_amr.metadata['snt']
