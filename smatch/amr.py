@@ -104,18 +104,19 @@ class AMR(object):
     attr_list=[] #each entry is an attr dict
     in_quote=False
     for i,c in enumerate(line.strip()):
-      if c==" ": 
+      if c==" ":
          if in_quote:
-            cur_charseq.append(c)
+            cur_charseq.append('_')
+            continue
          if state==2:
             cur_charseq.append(c)
          continue
-      if c=="\"":
+      elif c=="\"":
          if in_quote:
             in_quote=False
          else:
             in_quote=True
-      if c=="(":
+      elif c=="(":
          if in_quote:
             continue
          if state==2:

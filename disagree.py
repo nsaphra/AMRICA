@@ -22,11 +22,16 @@ should be in the same order of sentences between the files.
 import argparse
 import networkx as nx
 import amr_metadata
+from amr_alignment import Amr2AmrAligner
+from amr_alignment import default_aligner
 from smatch import smatch
 from collections import defaultdict
 import pygraphviz as pgz
 import copy
 import ConfigParser
+from pynlpl.formats.giza import GizaSentenceAlignment
+from pynlpl.common import u
+import codecs
 
 GOLD_COLOR = 'blue'
 TEST_COLOR = 'red'
@@ -144,7 +149,7 @@ def amr_disagree_to_graph(inst, rel1, rel2, gold_inst_t, gold_rel1_t, gold_rel2_
   return G
 
 
-def hilight_disagreement(test_amrs, gold_amr):
+def hilight_disagreement(test_amrs, gold_amr, aligner=default_aligner):
   """
   Input:
     gold_amr: gold AMR object
@@ -159,21 +164,23 @@ def hilight_disagreement(test_amrs, gold_amr):
   (gold_inst_t, gold_rel1_t, gold_rel2_t) = amr_info_to_dict(gold_inst, gold_rel1, gold_rel2)
 
   for a in test_amrs:
+    aligner.set_amrs(a, gold_amr)
     test_label="a"
     a.rename_node(test_label)
     (test_inst, test_rel1, test_rel2) = a.get_triples2()
     (best_match, best_match_num) = smatch.get_fh(test_inst, test_rel1, test_rel2,
       gold_inst, gold_rel1, gold_rel2,
-      test_label, gold_label)
+      test_label, gold_label, const_weight_fn=aligner.weight_fn, instance_weight_fn=aligner.weight_fn)
 
     amr_graphs.append(amr_disagree_to_graph(test_inst, test_rel1, test_rel2, gold_inst_t, gold_rel1_t, gold_rel2_t, best_match))
   return amr_graphs
 
 
 def monolingual_main(args):
-  infile = open(args.infile)
+  infile = codecs.open(args.infile, encoding='utf8')
   amrs_same_sent = []
   cur_id = ""
+  # TODO single-amr representation
   while True:
     (amr_line, comments) = amr_metadata.get_amr_line(infile)
     if amr_line == "":
@@ -209,6 +216,45 @@ def monolingual_main(args):
 
   infile.close()
 
+
+def xlang_main(args):
+  src_amr_fh = codecs.open(args.src_amr, encoding='utf8')
+  tgt_amr_fh = codecs.open(args.tgt_amr, encoding='utf8')
+  src2tgt_fh = codecs.open(args.align_src2tgt, encoding='utf8')
+  tgt2src_fh = codecs.open(args.align_tgt2src, encoding='utf8')
+  tgt_align_fh = codecs.open(args.align_tgtamr2snt, encoding='utf8')
+
+  amrs_same_sent = []
+  aligner = Amr2AmrAligner(num_best=int(args.num_align), src2tgt_fh=src2tgt_fh, tgt2src_fh=tgt2src_fh, tgt_align_fh=tgt_align_fh)
+  while True:
+    (src_amr_line, src_comments) = amr_metadata.get_amr_line(src_amr_fh)
+    if src_amr_line == "":
+      break
+    (tgt_amr_line, tgt_comments) = amr_metadata.get_amr_line(tgt_amr_fh)
+    src_amr = amr_metadata.AmrMeta.from_parse(src_amr_line, src_comments)
+    tgt_amr = amr_metadata.AmrMeta.from_parse(tgt_amr_line, tgt_comments)
+    assert src_amr.metadata['id'] == tgt_amr.metadata['id']
+    cur_id = src_amr.metadata['id']
+
+    src_sent = src_amr.metadata['snt']
+    tgt_sent = tgt_amr.metadata['snt']
+
+    # TODO make this more modular, beyond zh-en
+    amr_graphs = hilight_disagreement([tgt_amr], src_amr, aligner=aligner)
+    ag = nx.to_agraph(amr_graphs[0])
+    ag.layout(prog='dot')
+    ag.draw('%s/%s.png' % (args.outdir, cur_id))
+
+    if (args.verbose):
+      print("ID: %s\n Sentence: %s" % (cur_id, src_sent))
+    #raw_input("Press enter to continue: ")
+
+  src_amr_fh.close()
+  tgt_amr_fh.close()
+  src2tgt_fh.close()
+  tgt2src_fh.close()
+
+
 if __name__ == '__main__':
   conf_parser = argparse.ArgumentParser(add_help=False)
   conf_parser.add_argument("-c", "--conf_file",
@@ -234,10 +280,22 @@ if __name__ == '__main__':
   parser.add_argument('-v', '--verbose', action='store_true')
   parser.add_argument('-b', '--bitext', action='store_true',
     help='Input source and target language bitext AMRs.')
+  parser.add_argument('-s', '--src_amr',
+    help='In bitext mode, source language AMR file.')
+  parser.add_argument('-t', '--tgt_amr',
+    help='In bitext mode, target language AMR file.')
+  parser.add_argument('--align_src2tgt',
+    help='In bitext mode, GIZA alignment .NBEST file (see GIZA++ -nbestalignments opt) with source as vcb1.')
+  parser.add_argument('--align_tgt2src',
+    help='In bitext mode, GIZA alignment .NBEST file (see GIZA++ -nbestalignments opt) with target as vcb1.')
+  parser.add_argument('--align_tgtamr2snt',
+    help='In bitext mode, file aligning target AMR to sentence tokens.')
+  parser.add_argument('--num_align',
+    help='N for GIZA NBEST file.')
   # TODO make interactive option and option to process a specific range
   args = parser.parse_args(remaining_argv)
 
   if (args.bitext):
-    raise NotImplementedError
+    xlang_main(args)
   else:
     monolingual_main(args)
