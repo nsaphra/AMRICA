@@ -105,6 +105,8 @@ class AMR(object):
     in_quote=False
     for i,c in enumerate(line.strip()):
       if c==" ": 
+         if in_quote:
+            cur_charseq.append(c)
          if state==2:
             cur_charseq.append(c)
          continue
