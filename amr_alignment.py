@@ -26,6 +26,7 @@ class Amr2AmrAligner(object):
     self.tgt2src_fh = tgt2src_fh
     self.num_best = num_best
     self.tgt_align_fh = tgt_align_fh
+    self.amr2amr = {}
 
   def set_amrs(self, tgt_amr, src_amr):
     if self.is_default:
@@ -56,6 +57,15 @@ class Amr2AmrAligner(object):
             self.amr2amr[(tgt_lbl, src_lbl)] += t_score * s_score * sent2sent_union[t][s]
 
     self.weight_fn = lambda t,s : self.amr2amr[(t, s)]
+
+  def const_map_fn(self, const):
+    const_match = const
+    score = 0.0
+    for (t, s) in filter(lambda (x,y): y == const, self.amr2amr):
+      if self.amr2amr[(t,s)] > score:
+        const_match = t
+        score = self.amr2amr[(t,s)]
+    return const_match
 
   @staticmethod
   def get_all_labels(amr):

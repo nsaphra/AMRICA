@@ -58,7 +58,7 @@ def amr_info_to_dict(inst, rel1, rel2):
   return (inst_t, rel1_t, rel2_t)
 
 
-def amr_disagree_to_graph(inst, rel1, rel2, gold_inst_t, gold_rel1_t, gold_rel2_t, match):
+def amr_disagree_to_graph(inst, rel1, rel2, gold_inst_t, gold_rel1_t, gold_rel2_t, match, const_map_fn):
   """ 
   Input:
     (inst, rel1, rel2) from test amr.get_triples2()
@@ -92,19 +92,22 @@ def amr_disagree_to_graph(inst, rel1, rel2, gold_inst_t, gold_rel1_t, gold_rel2_
 
   # TODO decision: color all consts appearing in both charts black OR
   #      have consts hashed according to parent
+  # TODO either expand the number of possible const matches
+  #      or switch to a word-alignment-variant model
   for (reln, v, const) in rel1:
     node_color = DFLT_COLOR
     edge_color = DFLT_COLOR
-    if (gold_ind[v], const) in gold_rel1_t:
-      if reln not in gold_rel1_t[(gold_ind[v], const)]:
+    const_match = const_map_fn(const)
+    if (gold_ind[v], const_match) in gold_rel1_t:
+      if reln not in gold_rel1_t[(gold_ind[v], const_match)]:
         edge_color = TEST_COLOR
 
         # relns between existing nodes should be in unmatched rel2
-        gold_ind[const] = const
-        unmatched_gold_rel2[(gold_ind[v], const)] = unmatched_gold_rel1[(gold_ind[v], const)]
-        del unmatched_gold_rel1[(gold_ind[v], const)]
+        gold_ind[const] = const_match
+        unmatched_gold_rel2[(gold_ind[v], const_match)] = unmatched_gold_rel1[(gold_ind[v], const_match)]
+        del unmatched_gold_rel1[(gold_ind[v], const_match)]
       else:
-        unmatched_gold_rel1[(gold_ind[v], const)].remove(reln)
+        unmatched_gold_rel1[(gold_ind[v], const_match)].remove(reln)
     else:
       node_color = TEST_COLOR
       edge_color = TEST_COLOR
@@ -118,8 +121,8 @@ def amr_disagree_to_graph(inst, rel1, rel2, gold_inst_t, gold_rel1_t, gold_rel2_
             unmatched_gold_rel1[(v_, c_)].remove('TOP')
       G.add_edge(v, v, label=reln, color=edge_color, font_color=edge_color)
       continue
-    G.add_node(const, label=const, color=node_color, font_color=node_color)
-    G.add_edge(v, const, label=reln, color=edge_color, font_color=edge_color)
+    G.add_node(v+' '+const, label=const, color=node_color, font_color=node_color)
+    G.add_edge(v, v+' '+const, label=reln, color=edge_color, font_color=edge_color)
 
   for (reln, v1, v2) in rel2:
     edge_color = DFLT_COLOR
@@ -178,7 +181,7 @@ def hilight_disagreement(test_amrs, gold_amr, aligner=default_aligner):
       gold_inst, gold_rel1, gold_rel2,
       test_label, gold_label, const_weight_fn=aligner.weight_fn, instance_weight_fn=aligner.weight_fn)
 
-    amr_graphs.append(amr_disagree_to_graph(test_inst, test_rel1, test_rel2, gold_inst_t, gold_rel1_t, gold_rel2_t, best_match))
+    amr_graphs.append(amr_disagree_to_graph(test_inst, test_rel1, test_rel2, gold_inst_t, gold_rel1_t, gold_rel2_t, best_match, aligner.const_map_fn))
   return amr_graphs
 
 
