@@ -17,8 +17,6 @@ should be in the same order of sentences between the files.
 """
 
 # TODO deal with constant name dupes
-# TODO TOP for different-instance-names nodes should have same edge
-# TODO multiline sentences don't print right
 import argparse
 import networkx as nx
 import amr_metadata
