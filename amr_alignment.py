@@ -44,26 +44,26 @@ class Amr2AmrAligner(object):
     amr2sent_tgt = align_amr2sent_en(tgt_labels, self.tgt_toks, tgt_align)
     amr2sent_src = align_amr2sent_dflt(src_labels, self.src_toks)
 
-    self.amr2amr = {}
+    self.amr2amr = defaultdict(float)
     for (tgt_lbl, tgt_scores) in amr2sent_tgt.items():
       for (src_lbl, src_scores) in amr2sent_src.items():
         if src_lbl == tgt_lbl:
           self.amr2amr[(tgt_lbl, src_lbl)] = 1.0
           continue
-        if (tgt_lbl, src_lbl) not in self.amr2amr:
-          self.amr2amr[(tgt_lbl, src_lbl)] = 0.0
         for (t, t_score) in enumerate(tgt_scores):
           for (s, s_score) in enumerate(src_scores):
-            self.amr2amr[(tgt_lbl, src_lbl)] += t_score * s_score * sent2sent_union[t][s]
+            score = t_score * s_score * sent2sent_union[t][s]
+            if score > 0:
+              self.amr2amr[(tgt_lbl, src_lbl)] += score
 
     self.weight_fn = lambda t,s : self.amr2amr[(t, s)]
 
   def const_map_fn(self, const):
     const_match = const
     score = 0.0
-    for (t, s) in filter(lambda (x,y): y == const, self.amr2amr):
+    for (t, s) in filter(lambda (x,y): x == const, self.amr2amr):
       if self.amr2amr[(t,s)] > score:
-        const_match = t
+        const_match = s
         score = self.amr2amr[(t,s)]
     return const_match
 
@@ -130,7 +130,6 @@ def align_amr2sent_en(labels, sent, align_lines):
     for t_ind in matches:
       align[label][t_ind] = 1.0 / len(matches)
   return align
-  # raise NotImplementedError
 
 def align_sent2sent(tgt_toks, src_toks, alignment_scores):
   z = sum([s for (a,s) in alignment_scores])

@@ -97,8 +97,10 @@ def amr_disagree_to_graph(inst, rel1, rel2, gold_inst_t, gold_rel1_t, gold_rel2_
   for (reln, v, const) in rel1:
     node_color = DFLT_COLOR
     edge_color = DFLT_COLOR
+    label = const
     const_match = const_map_fn(const)
     if (gold_ind[v], const_match) in gold_rel1_t:
+      label = "%s (%s)" % (const, const_match)
       if reln not in gold_rel1_t[(gold_ind[v], const_match)]:
         edge_color = TEST_COLOR
 
@@ -121,7 +123,7 @@ def amr_disagree_to_graph(inst, rel1, rel2, gold_inst_t, gold_rel1_t, gold_rel2_
             unmatched_gold_rel1[(v_, c_)].remove('TOP')
       G.add_edge(v, v, label=reln, color=edge_color, font_color=edge_color)
       continue
-    G.add_node(v+' '+const, label=const, color=node_color, font_color=node_color)
+    G.add_node(v+' '+const, label=label, color=node_color, font_color=node_color)
     G.add_edge(v, v+' '+const, label=reln, color=edge_color, font_color=edge_color)
 
   for (reln, v1, v2) in rel2:
@@ -255,7 +257,7 @@ def xlang_main(args):
     ag.draw('%s/%s.png' % (args.outdir, cur_id))
 
     if (args.verbose):
-      print("ID: %s\n Sentence: %s" % (cur_id, src_sent))
+      print("ID: %s\n Sentence: %s\n Sentence: %s" % (cur_id, src_sent, tgt_sent))
     #raw_input("Press enter to continue: ")
 
   src_amr_fh.close()
