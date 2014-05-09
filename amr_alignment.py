@@ -85,10 +85,17 @@ def get_amr2sent_lines(fh):
 
 def align_amr2sent_dflt(labels, sent):
   align = {l:[0.0 for tok in sent] for l in labels}
-  for lbl in labels:
-    matches = [t_ind for (t_ind, t) in enumerate(sent) if t.lower() == lbl.lower()]
+  for label in labels:
+    lbl = label.lower()
+    # checking for multiwords / bad segmentation
+    # ('_' replaces ' ' in multiword quotes)
+    # TODO just fix AMR format parser to deal with spaces in quotes
+    possible_toks = lbl.split('_')
+    possible_toks.append(lbl)
+
+    matches = [t_ind for (t_ind, t) in enumerate(sent) if t.lower() in possible_toks]
     for t_ind in matches:
-      align[lbl][t_ind] = 1.0 / len(matches)
+      align[label][t_ind] = 1.0 / len(matches)
   return align
 
 def align_amr2sent_en(labels, sent, align_lines):
@@ -120,10 +127,13 @@ def align_amr2sent_en(labels, sent, align_lines):
 def align_sent2sent(tgt_toks, src_toks, alignment_scores):
   z = sum([s for (a,s) in alignment_scores])
   tok_align = [[0.0 for s in src_toks] for t in tgt_toks]
+  print len(tgt_toks)
+  print len(src_toks)
   for (align, score) in alignment_scores:
     print align.alignment
     for srcind, tgtind in align.alignment:
-      tok_align[tgtind][srcind] += score
+      if tgtind >= 0 and srcind >= 0: 
+        tok_align[tgtind][srcind] += score
 
   for targetind, targettok in enumerate(tgt_toks):
     for sourceind, sourcetok in enumerate(src_toks):
@@ -146,7 +156,6 @@ def get_nbest_alignments(fh, num_nbest):
   aligns = []
   for ind in range(num_nbest):
     meta_line = fh.readline()
-    print meta_line
     if meta_line == "":
       return None
 

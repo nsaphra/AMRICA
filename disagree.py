@@ -247,6 +247,7 @@ def xlang_main(args):
 
     if (args.verbose):
       print("ID: %s\n Sentence: %s" % (cur_id, src_sent))
+    print "============"
     #raw_input("Press enter to continue: ")
 
   src_amr_fh.close()

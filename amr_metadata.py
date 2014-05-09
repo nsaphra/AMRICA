@@ -27,7 +27,7 @@ class AmrMeta(AMR):
   def from_parse(cls, annotation_line, comment_lines):
     metadata = {}
     for l in comment_lines:
-      matches = re.findall(r'::(\S+)\s([^:]+)', l)
+      matches = re.findall(r'::(\S+)\s(([^:]|:(?!:))+)', l)
       for m in matches:
         metadata[m[0]] = m[1].strip()
 
