@@ -90,6 +90,8 @@ def amr_disagree_to_graph(inst, rel1, rel2, gold_inst_t, gold_rel1_t, gold_rel2_
         del unmatched_gold_inst[match[ind]]
     G.add_node(v, label=label, color=node_color, font_color=font_color)
 
+  # TODO decision: color all consts appearing in both charts black OR
+  #      have consts hashed according to parent
   for (reln, v, const) in rel1:
     node_color = DFLT_COLOR
     edge_color = DFLT_COLOR
