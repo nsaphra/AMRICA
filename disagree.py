@@ -110,6 +110,12 @@ def amr_disagree_to_graph(inst, rel1, rel2, gold_inst_t, gold_rel1_t, gold_rel2_
       edge_color = TEST_COLOR
     # special case: "TOP" specifier not annotated
     if reln == 'TOP':
+      # find similar TOP edges in gold if they are not labeled with same instance
+      if edge_color == TEST_COLOR:
+        for ((v_, c_), r_) in unmatched_gold_rel1.items():
+          if v_ == gold_ind[v] and 'TOP' in r_:
+            edge_color = DFLT_COLOR
+            unmatched_gold_rel1[(v_, c_)].remove('TOP')
       G.add_edge(v, v, label=reln, color=edge_color, font_color=edge_color)
       continue
     G.add_node(const, label=const, color=node_color, font_color=node_color)
