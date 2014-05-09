@@ -31,8 +31,6 @@ class Amr2AmrAligner(object):
     if self.is_default:
       return
 
-    print tgt_amr.metadata['snt']
-    print src_amr.metadata['snt']
     self.tgt_toks = tgt_amr.metadata['snt'].strip().split()
     self.src_toks = src_amr.metadata['snt'].strip().split()
     tgt_labels = self.get_all_labels(tgt_amr)
@@ -127,12 +125,9 @@ def align_amr2sent_en(labels, sent, align_lines):
 def align_sent2sent(tgt_toks, src_toks, alignment_scores):
   z = sum([s for (a,s) in alignment_scores])
   tok_align = [[0.0 for s in src_toks] for t in tgt_toks]
-  print len(tgt_toks)
-  print len(src_toks)
   for (align, score) in alignment_scores:
-    print align.alignment
     for srcind, tgtind in align.alignment:
-      if tgtind >= 0 and srcind >= 0: 
+      if tgtind >= 0 and srcind >= 0:
         tok_align[tgtind][srcind] += score
 
   for targetind, targettok in enumerate(tgt_toks):
