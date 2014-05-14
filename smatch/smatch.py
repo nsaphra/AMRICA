@@ -483,6 +483,8 @@ def get_fh(test_instance,test_relation1,test_relation2,gold_instance,gold_relati
            gold_relation2: relation triples of AMR 2 (two-variable)
            test_label: prefix label for AMRe 1
            gold_label: prefix label for AMR 2
+           const_weight_fn: returns score gain for constant label match
+           instance_weight_fn: returns score gain for instance label match
         Returns:
            best_match: the variable mapping which results in the best matching triple number
            best_match_num: the highest matching number
