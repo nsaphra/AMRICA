@@ -69,25 +69,25 @@ class SmatchGraph:
 
     # Add gold standard elements not in test
     node_hashes = {v:k for (k,v) in self.gold_ind.items()} # reverse lookup from gold ind
-    for (self.gold_ind, instof) in self.unmatched_inst.items():
-      node_hashes[self.gold_ind] = 'GOLD %s' % self.gold_ind
-      self.G.add_node(node_hashes[self.gold_ind], label=instof, color=GOLD_COLOR, font_color=GOLD_COLOR)
-    for ((self.gold_ind, const), relns) in self.unmatched_rel1.items():
+    for (ind, instof) in self.unmatched_inst.items():
+      node_hashes[ind] = 'GOLD %s' % ind
+      self.G.add_node(node_hashes[ind], label=instof, color=GOLD_COLOR, font_color=GOLD_COLOR)
+    for ((ind, const), relns) in self.unmatched_rel1.items():
       #TODO check if const node already in
       for reln in relns:
         # special case: "TOP" specifier not annotated
         if reln == 'TOP':
-          self.G.add_edge(node_hashes[self.gold_ind], node_hashes[self.gold_ind], label=reln, color=GOLD_COLOR, font_color=GOLD_COLOR)
+          self.G.add_edge(node_hashes[ind], node_hashes[ind], label=reln, color=GOLD_COLOR, font_color=GOLD_COLOR)
           continue
 
-        const_hash = node_hashes[self.gold_ind] + ' ' + const
+        const_hash = node_hashes[ind] + ' ' + const
         if const_hash not in node_hashes:
           node_hashes[const_hash] = const_hash
           self.G.add_node(const_hash, label=const, color=GOLD_COLOR, font_color=GOLD_COLOR)
-        self.G.add_edge(node_hashes[self.gold_ind], node_hashes[const_hash], label=reln, color=GOLD_COLOR, font_color=GOLD_COLOR)
-    for ((self.gold_ind1, self.gold_ind2), relns) in self.unmatched_rel2.items():
+        self.G.add_edge(node_hashes[ind], node_hashes[const_hash], label=reln, color=GOLD_COLOR, font_color=GOLD_COLOR)
+    for ((ind1, ind2), relns) in self.unmatched_rel2.items():
       for reln in relns:
-        self.G.add_edge(node_hashes[self.gold_ind1], node_hashes[self.gold_ind2], label=reln, color=GOLD_COLOR, font_color=GOLD_COLOR)
+        self.G.add_edge(node_hashes[ind1], node_hashes[ind2], label=reln, color=GOLD_COLOR, font_color=GOLD_COLOR)
     return self.G
 
   def add_inst(self, ind, var, instof):
@@ -150,6 +150,7 @@ class SmatchGraph:
     else:
       edge_color = TEST_COLOR
     self.G.add_edge(v1, v2, label=reln, color=edge_color, font_color=edge_color)
+
 
 def amr2dict(inst, rel1, rel2):
   """ Get tables of AMR data indexed by variable number """
