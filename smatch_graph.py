@@ -55,69 +55,17 @@ class SmatchGraph:
     """
 
     for (ind, (i, v, instof)) in enumerate(self.inst):
-      self.gold_ind[v] = self.match[ind]
-
-      node_color = DFLT_COLOR
-      font_color = DFLT_COLOR
-      label = instof
-      if self.match[ind] < 0:
-        font_color = TEST_COLOR
-        node_color = TEST_COLOR
-      else:
-        if self.gold_inst_t[self.match[ind]] != instof:
-          font_color = TEST_COLOR
-          label = "%s (%s)" % (instof, self.gold_inst_t[self.match[ind]])
-        if self.match[ind] in self.unmatched_inst:
-          del self.unmatched_inst[self.match[ind]]
-      self.G.add_node(v, label=label, color=node_color, font_color=font_color)
+      self.add_inst(ind, v, instof)
 
     # TODO decision: color all consts appearing in both charts black OR
     #      have consts hashed according to parent
     # TODO either expand the number of possible const matches
     #      or switch to a word-alignment-variant model
     for (reln, v, const) in self.rel1:
-      node_color = DFLT_COLOR
-      edge_color = DFLT_COLOR
-      label = const
-      const_match = self.map_fn(const)
-      if (self.gold_ind[v], const_match) in self.gold_rel1_t:
-        if const != const_match:
-          label = "%s (%s)" % (const, const_match)
-        if reln not in self.gold_rel1_t[(self.gold_ind[v], const_match)]:
-          edge_color = TEST_COLOR
-
-          # relns between existing nodes should be in unmatched rel2
-          self.gold_ind[const] = const_match
-          self.unmatched_rel2[(self.gold_ind[v], const_match)] = self.unmatched_rel1[(self.gold_ind[v], const_match)]
-          del self.unmatched_rel1[(self.gold_ind[v], const_match)]
-        else:
-          self.unmatched_rel1[(self.gold_ind[v], const_match)].remove(reln)
-      else:
-        node_color = TEST_COLOR
-        edge_color = TEST_COLOR
-      # special case: "TOP" specifier not annotated
-      if reln == 'TOP':
-        # find similar TOP edges in gold if they are not labeled with same instance
-        if edge_color == TEST_COLOR:
-          for ((v_, c_), r_) in self.unmatched_rel1.items():
-            if v_ == self.gold_ind[v] and 'TOP' in r_:
-              edge_color = DFLT_COLOR
-              self.unmatched_rel1[(v_, c_)].remove('TOP')
-        self.G.add_edge(v, v, label=reln, color=edge_color, font_color=edge_color)
-        continue
-      self.G.add_node(v+' '+const, label=label, color=node_color, font_color=node_color)
-      self.G.add_edge(v, v+' '+const, label=reln, color=edge_color, font_color=edge_color)
+      self.add_rel1(reln, v, const)
 
     for (reln, v1, v2) in self.rel2:
-      edge_color = DFLT_COLOR
-      if (self.gold_ind[v1], self.gold_ind[v2]) in self.gold_rel2_t:
-        if reln not in self.gold_rel2_t[(self.gold_ind[v1], self.gold_ind[v2])]:
-          edge_color = TEST_COLOR
-        else:
-          self.unmatched_rel2[(self.gold_ind[v1], self.gold_ind[v2])].remove(reln)
-      else:
-        edge_color = TEST_COLOR
-      self.G.add_edge(v1, v2, label=reln, color=edge_color, font_color=edge_color)
+      self.add_rel2(reln, v1, v2)
 
     # Add gold standard elements not in test
     node_hashes = {v:k for (k,v) in self.gold_ind.items()} # reverse lookup from gold ind
@@ -142,6 +90,66 @@ class SmatchGraph:
         self.G.add_edge(node_hashes[self.gold_ind1], node_hashes[self.gold_ind2], label=reln, color=GOLD_COLOR, font_color=GOLD_COLOR)
     return self.G
 
+  def add_inst(self, ind, var, instof):
+    self.gold_ind[var] = self.match[ind]
+
+    node_color = DFLT_COLOR
+    font_color = DFLT_COLOR
+    label = instof
+    if self.match[ind] < 0:
+      font_color = TEST_COLOR
+      node_color = TEST_COLOR
+    else:
+      if self.gold_inst_t[self.match[ind]] != instof:
+        font_color = TEST_COLOR
+        label = "%s (%s)" % (instof, self.gold_inst_t[self.match[ind]])
+      if self.match[ind] in self.unmatched_inst:
+        del self.unmatched_inst[self.match[ind]]
+    self.G.add_node(var, label=label, color=node_color, font_color=font_color)
+
+  def add_rel1(self, reln, var, const):
+    node_color = DFLT_COLOR
+    edge_color = DFLT_COLOR
+    label = const
+    const_match = self.map_fn(const)
+    if (self.gold_ind[var], const_match) in self.gold_rel1_t:
+      if const != const_match:
+        label = "%s (%s)" % (const, const_match)
+      if reln not in self.gold_rel1_t[(self.gold_ind[var], const_match)]:
+        edge_color = TEST_COLOR
+
+        # relns between existing nodes should be in unmatched rel2
+        self.gold_ind[const] = const_match
+        self.unmatched_rel2[(self.gold_ind[var], const_match)] = self.unmatched_rel1[(self.gold_ind[var], const_match)]
+        del self.unmatched_rel1[(self.gold_ind[var], const_match)]
+      else:
+        self.unmatched_rel1[(self.gold_ind[var], const_match)].remove(reln)
+    else:
+      node_color = TEST_COLOR
+      edge_color = TEST_COLOR
+    # special case: "TOP" specifier not annotated
+    if reln == 'TOP':
+      # find similar TOP edges in gold if they are not labeled with same instance
+      if edge_color == TEST_COLOR:
+        for ((v_, c_), r_) in self.unmatched_rel1.items():
+          if v_ == self.gold_ind[var] and 'TOP' in r_:
+            edge_color = DFLT_COLOR
+            self.unmatched_rel1[(v_, c_)].remove('TOP')
+      self.G.add_edge(var, var, label=reln, color=edge_color, font_color=edge_color)
+      return
+    self.G.add_node(var+' '+const, label=label, color=node_color, font_color=node_color)
+    self.G.add_edge(var, var+' '+const, label=reln, color=edge_color, font_color=edge_color)
+
+  def add_rel2(self, reln, v1, v2):
+    edge_color = DFLT_COLOR
+    if (self.gold_ind[v1], self.gold_ind[v2]) in self.gold_rel2_t:
+      if reln not in self.gold_rel2_t[(self.gold_ind[v1], self.gold_ind[v2])]:
+        edge_color = TEST_COLOR
+      else:
+        self.unmatched_rel2[(self.gold_ind[v1], self.gold_ind[v2])].remove(reln)
+    else:
+      edge_color = TEST_COLOR
+    self.G.add_edge(v1, v2, label=reln, color=edge_color, font_color=edge_color)
 
 def amr2dict(inst, rel1, rel2):
   """ Get tables of AMR data indexed by variable number """
@@ -164,5 +172,3 @@ def amr2dict(inst, rel1, rel2):
     rel2_t[(node_inds[v1], node_inds[v2])].add(label)
 
   return (inst_t, rel1_t, rel2_t)
-
-
