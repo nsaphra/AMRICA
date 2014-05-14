@@ -28,7 +28,6 @@ import pygraphviz as pgz
 import copy
 import ConfigParser
 from pynlpl.formats.giza import GizaSentenceAlignment
-from pynlpl.common import u
 import codecs
 
 GOLD_COLOR = 'blue'
@@ -68,7 +67,7 @@ def amr_disagree_to_graph(inst, rel1, rel2, gold_inst_t, gold_rel1_t, gold_rel2_
   """
   G = nx.MultiDiGraph()
   gold_ind = {} # test variable name -> gold variable index
-  tablecopy = lambda x: copy.deepcopy(x) #{k:copy.copy(v) for (k,v) in x.items()}
+  tablecopy = lambda x: copy.deepcopy(x)
   unmatched_gold_inst = tablecopy(gold_inst_t)
   unmatched_gold_rel1 = tablecopy(gold_rel1_t)
   unmatched_gold_rel2 = tablecopy(gold_rel2_t)
