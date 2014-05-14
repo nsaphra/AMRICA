@@ -29,6 +29,7 @@ import ConfigParser
 from pynlpl.formats.giza import GizaSentenceAlignment
 import codecs
 import smatch_graph
+from smatch_graph import SmatchGraph
 
 def hilight_disagreement(test_amrs, gold_amr, aligner=default_aligner):
   """
@@ -53,9 +54,10 @@ def hilight_disagreement(test_amrs, gold_amr, aligner=default_aligner):
       gold_inst, gold_rel1, gold_rel2,
       test_label, gold_label, const_weight_fn=aligner.weight_fn, instance_weight_fn=aligner.weight_fn)
 
-    amr_graphs.append(smatch_graph.smatch2graph(test_inst, test_rel1, test_rel2, \
+    disagreement = SmatchGraph(test_inst, test_rel1, test_rel2, \
       gold_inst_t, gold_rel1_t, gold_rel2_t, \
-      best_match, aligner.const_map_fn))
+      best_match, const_map_fn=aligner.const_map_fn, prebuilt_tables=True)
+    amr_graphs.append(disagreement.smatch2graph())
   return amr_graphs
 
 
