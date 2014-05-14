@@ -100,7 +100,8 @@ def amr_disagree_to_graph(inst, rel1, rel2, gold_inst_t, gold_rel1_t, gold_rel2_
     label = const
     const_match = const_map_fn(const)
     if (gold_ind[v], const_match) in gold_rel1_t:
-      label = "%s (%s)" % (const, const_match)
+      if const != const_match:
+        label = "%s (%s)" % (const, const_match)
       if reln not in gold_rel1_t[(gold_ind[v], const_match)]:
         edge_color = TEST_COLOR
 
@@ -150,10 +151,11 @@ def amr_disagree_to_graph(inst, rel1, rel2, gold_inst_t, gold_rel1_t, gold_rel2_
         G.add_edge(node_hashes[gold_ind], node_hashes[gold_ind], label=reln, color=GOLD_COLOR, font_color=GOLD_COLOR)
         continue
 
-      if const not in node_hashes:
-        node_hashes[const] = 'GOLD %s' % const
-        G.add_node(const, label=const, color=GOLD_COLOR, font_color=GOLD_COLOR)
-      G.add_edge(node_hashes[gold_ind], const, label=reln, color=GOLD_COLOR, font_color=GOLD_COLOR)
+      const_hash = node_hashes[gold_ind] + ' ' + const
+      if const_hash not in node_hashes:
+        node_hashes[const_hash] = const_hash
+        G.add_node(const_hash, label=const, color=GOLD_COLOR, font_color=GOLD_COLOR)
+      G.add_edge(node_hashes[gold_ind], node_hashes[const_hash], label=reln, color=GOLD_COLOR, font_color=GOLD_COLOR)
   for ((gold_ind1, gold_ind2), relns) in unmatched_gold_rel2.items():
     for reln in relns:
       G.add_edge(node_hashes[gold_ind1], node_hashes[gold_ind2], label=reln, color=GOLD_COLOR, font_color=GOLD_COLOR)
