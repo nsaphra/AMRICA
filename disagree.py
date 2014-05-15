@@ -125,7 +125,6 @@ def xlang_main(args):
     src_sent = src_amr.metadata['snt']
     tgt_sent = tgt_amr.metadata['snt']
 
-    # TODO make this more modular, beyond zh-en
     amr_graphs = hilight_disagreement([tgt_amr], src_amr, aligner=aligner)
     ag = nx.to_agraph(amr_graphs[0])
     ag.layout(prog='dot')

@@ -57,17 +57,12 @@ class SmatchGraph:
     for (ind, (i, v, instof)) in enumerate(self.inst):
       self.add_inst(ind, v, instof)
 
-    # TODO decision: color all consts appearing in both charts black OR
-    #      have consts hashed according to parent
-    # TODO either expand the number of possible const matches
-    #      or switch to a word-alignment-variant model
     for (reln, v, const) in self.rel1:
       self.add_rel1(reln, v, const)
 
     for (reln, v1, v2) in self.rel2:
       self.add_rel2(reln, v1, v2)
 
-    # unmatch variables that don't contribute to score
     if weight_fn:
       self.unmatch_dead_nodes(weight_fn)
 
@@ -168,6 +163,7 @@ class SmatchGraph:
     self.add_edge(v1, v2, reln, gold_lbl)
 
   def unmatch_dead_nodes(self, weight_fn):
+    """ Unmap node mappings that don't increase smatch score. """
     node_is_live = {v:(gold == -1) for (v, gold) in self.gold_ind.items()}
     for (v, attr) in self.G.nodes(data=True):
       if weight_fn(attr['test_label'], attr['gold_label']):
