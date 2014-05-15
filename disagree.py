@@ -65,7 +65,6 @@ def monolingual_main(args):
   infile = codecs.open(args.infile, encoding='utf8')
   amrs_same_sent = []
   cur_id = ""
-  # TODO single-amr representation
   while True:
     (amr_line, comments) = amr_metadata.get_amr_line(infile)
     if amr_line == "":
@@ -78,6 +77,8 @@ def monolingual_main(args):
     if cur_id != cur_amr.metadata['id']:
       gold_amr = amrs_same_sent[0]
       test_amrs = amrs_same_sent[1:]
+      if len(test_amrs) == 0:
+        test_amrs = [gold_amr] # single AMR view case
       amr_graphs = hilight_disagreement(test_amrs, gold_amr)
 
       gold_anno = gold_amr.metadata['annotator']
