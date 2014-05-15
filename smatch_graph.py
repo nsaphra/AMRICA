@@ -45,10 +45,10 @@ class SmatchGraph:
 
     (self.unmatched_inst, self.unmatched_rel1, self.unmatched_rel2) = \
       [copy.deepcopy(x) for x in (self.gold_inst_t, self.gold_rel1_t, self.gold_rel2_t)]
-    self.gold_ind = {} # test variable name -> gold variable index
+    self.gold_ind = {} # test variable hash -> gold variable index
     self.G = nx.MultiDiGraph()
 
-  def smatch2graph(self):
+  def smatch2graph(self, weight_fn=None):
     """
     Returns graph of test AMR / gold AMR union, with hilighted disagreements for
     different labels on edges and nodes, unmatched nodes and edges.
@@ -66,6 +66,10 @@ class SmatchGraph:
 
     for (reln, v1, v2) in self.rel2:
       self.add_rel2(reln, v1, v2)
+
+    # unmatch variables that don't contribute to score
+    if weight_fn:
+      self.unmatch_dead_nodes(weight_fn)
 
     # Add gold standard elements not in test
     test_ind = {v:k for (k,v) in self.gold_ind.items()} # reverse lookup from gold ind
@@ -96,18 +100,18 @@ class SmatchGraph:
   def add_edge(self, v1, v2, test_lbl, gold_lbl):
     assert(gold_lbl == '' or test_lbl == '' or gold_lbl == test_lbl)
     if gold_lbl == '':
-      self.G.add_edge(v1, v2, label=test_lbl, test_label=test_lbl, color=TEST_COLOR)
+      self.G.add_edge(v1, v2, label=test_lbl, test_label=test_lbl, gold_label=gold_lbl, color=TEST_COLOR)
     elif test_lbl == '':
-      self.G.add_edge(v1, v2, label=gold_lbl, gold_label=gold_lbl, color=GOLD_COLOR)
+      self.G.add_edge(v1, v2, label=gold_lbl, test_label=test_lbl, gold_label=gold_lbl, color=GOLD_COLOR)
     elif test_lbl == gold_lbl:
       self.G.add_edge(v1, v2, label=test_lbl, test_label=test_lbl, gold_label=gold_lbl, color=DFLT_COLOR)
 
   def add_node(self, v, test_lbl, gold_lbl):
     assert(gold_lbl or test_lbl)
     if gold_lbl == '':
-      self.G.add_node(v, label=test_lbl, test_label=test_lbl, color=TEST_COLOR)
+      self.G.add_node(v, label=test_lbl, test_label=test_lbl, gold_label=gold_lbl, color=TEST_COLOR)
     elif test_lbl == '':
-      self.G.add_node(v, label=gold_lbl, gold_label=gold_lbl, color=GOLD_COLOR)
+      self.G.add_node(v, label=gold_lbl, test_label=test_lbl, gold_label=gold_lbl, color=GOLD_COLOR)
     elif test_lbl == gold_lbl:
       self.G.add_node(v, label=test_lbl, test_label=test_lbl, gold_label=gold_lbl, color=DFLT_COLOR)
     else:
@@ -162,6 +166,26 @@ class SmatchGraph:
         gold_lbl = reln
         self.unmatched_rel2[(self.gold_ind[v1], self.gold_ind[v2])].remove(reln)
     self.add_edge(v1, v2, reln, gold_lbl)
+
+  def unmatch_dead_nodes(self, weight_fn):
+    node_is_live = {v:(gold == -1) for (v, gold) in self.gold_ind.items()}
+    for (v, attr) in self.G.nodes(data=True):
+      if weight_fn(attr['test_label'], attr['gold_label']):
+        node_is_live[v] = True
+    for (v1, links) in self.G.adjacency_iter():
+      for (v2, edges) in links.items():
+        for (ind, attr) in edges.items():
+          if attr['test_label'] == attr['gold_label']: #TODO is this sufficient condition?
+            node_is_live[v2] = True
+            node_is_live[v1] = True
+
+    for v in node_is_live.keys():
+      if not node_is_live[v]:
+        self.unmatched_inst[self.gold_ind[v]] = self.G.node[v]['gold_label']
+        self.G.node[v]['gold_label'] = ''
+        self.G.node[v]['label'] = self.G.node[v]['test_label']
+        self.G.node[v]['color'] = TEST_COLOR
+        del self.gold_ind[v]
 
 
 def amr2dict(inst, rel1, rel2):
