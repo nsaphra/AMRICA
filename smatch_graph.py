@@ -90,66 +90,75 @@ class SmatchGraph:
         self.G.add_edge(node_hashes[ind1], node_hashes[ind2], label=reln, color=GOLD_COLOR, font_color=GOLD_COLOR)
     return self.G
 
+  def add_edge(self, v1, v2, test_lbl, gold_lbl):
+    assert(gold_lbl == '' or test_lbl == '' or gold_lbl == test_lbl)
+    if gold_lbl == '':
+      self.G.add_edge(v1, v2, label=test_lbl, test_label=test_lbl, color=TEST_COLOR)
+    elif test_lbl == '':
+      self.G.add_edge(v1, v2, label=gold_lbl, gold_label=gold_lbl, color=GOLD_COLOR)
+    elif test_lbl == gold_lbl:
+      self.G.add_edge(v1, v2, label=test_lbl, test_label=test_lbl, gold_label=gold_lbl, color=DFLT_COLOR)
+
+  def add_node(self, v, test_lbl, gold_lbl):
+    assert(gold_lbl or test_lbl)
+    if gold_lbl == '':
+      self.G.add_node(v, label=test_lbl, test_label=test_lbl, color=TEST_COLOR)
+    elif test_lbl == '':
+      self.G.add_node(v, label=gold_lbl, gold_label=gold_lbl, color=GOLD_COLOR)
+    elif test_lbl == gold_lbl:
+      self.G.add_node(v, label=test_lbl, test_label=test_lbl, gold_label=gold_lbl, color=DFLT_COLOR)
+    else:
+      self.G.add_node(v, label="%s (%s)" % (test_lbl, gold_lbl), test_label=test_lbl, gold_label=gold_lbl, color=DFLT_COLOR)
+
   def add_inst(self, ind, var, instof):
     self.gold_ind[var] = self.match[ind]
-
-    node_color = DFLT_COLOR
-    font_color = DFLT_COLOR
-    label = instof
-    if self.match[ind] < 0:
-      font_color = TEST_COLOR
-      node_color = TEST_COLOR
-    else:
-      if self.gold_inst_t[self.match[ind]] != instof:
-        font_color = TEST_COLOR
-        label = "%s (%s)" % (instof, self.gold_inst_t[self.match[ind]])
+    gold_lbl = ''
+    if self.match[ind] >= 0: # there's a gold match
+      gold_lbl = self.gold_inst_t[self.match[ind]]
       if self.match[ind] in self.unmatched_inst:
         del self.unmatched_inst[self.match[ind]]
-    self.G.add_node(var, label=label, color=node_color, font_color=font_color)
+    self.add_node(var, instof, gold_lbl)
 
   def add_rel1(self, reln, var, const):
-    node_color = DFLT_COLOR
-    edge_color = DFLT_COLOR
-    label = const
     const_match = self.map_fn(const)
-    if (self.gold_ind[var], const_match) in self.gold_rel1_t:
-      if const != const_match:
-        label = "%s (%s)" % (const, const_match)
-      if reln not in self.gold_rel1_t[(self.gold_ind[var], const_match)]:
-        edge_color = TEST_COLOR
+    gold_edge_lbl = ''
 
-        # relns between existing nodes should be in unmatched rel2
-        self.gold_ind[const] = const_match
-        self.unmatched_rel2[(self.gold_ind[var], const_match)] = self.unmatched_rel1[(self.gold_ind[var], const_match)]
-        del self.unmatched_rel1[(self.gold_ind[var], const_match)]
-      else:
-        self.unmatched_rel1[(self.gold_ind[var], const_match)].remove(reln)
-    else:
-      node_color = TEST_COLOR
-      edge_color = TEST_COLOR
     # special case: "TOP" specifier not annotated
     if reln == 'TOP':
       # find similar TOP edges in gold if they are not labeled with same instance
-      if edge_color == TEST_COLOR:
+      if reln in self.gold_rel1_t.get((self.gold_ind[var], const_match), {}):
         for ((v_, c_), r_) in self.unmatched_rel1.items():
           if v_ == self.gold_ind[var] and 'TOP' in r_:
-            edge_color = DFLT_COLOR
+            gold_edge_lbl = reln
             self.unmatched_rel1[(v_, c_)].remove('TOP')
-      self.G.add_edge(var, var, label=reln, color=edge_color, font_color=edge_color)
+            break
+      self.add_edge(var, var, reln, gold_edge_lbl)
       return
-    self.G.add_node(var+' '+const, label=label, color=node_color, font_color=node_color)
-    self.G.add_edge(var, var+' '+const, label=reln, color=edge_color, font_color=edge_color)
+
+    gold_node_lbl = ''
+    node_hash = var+' '+const,
+    if (self.gold_ind[var], const_match) in self.gold_rel1_t:
+      gold_node_lbl = const_match
+      #TODO put the metatable editing in the helper fcns?
+      if reln not in self.gold_rel1_t[(self.gold_ind[var], const_match)]:
+        # relns between existing nodes should be in unmatched rel2
+        self.gold_ind[node_hash] = const_match
+        self.unmatched_rel2[(self.gold_ind[var], const_match)] = self.unmatched_rel1[(self.gold_ind[var], const_match)]
+        del self.unmatched_rel1[(self.gold_ind[var], const_match)]
+      else:
+        gold_edge_lbl = reln
+        self.unmatched_rel1[(self.gold_ind[var], const_match)].remove(reln)
+
+    self.add_node(node_hash, const, gold_node_lbl)
+    self.add_edge(var, node_hash, reln, gold_edge_lbl)
 
   def add_rel2(self, reln, v1, v2):
-    edge_color = DFLT_COLOR
+    gold_lbl = ''
     if (self.gold_ind[v1], self.gold_ind[v2]) in self.gold_rel2_t:
-      if reln not in self.gold_rel2_t[(self.gold_ind[v1], self.gold_ind[v2])]:
-        edge_color = TEST_COLOR
-      else:
+      if reln in self.gold_rel2_t[(self.gold_ind[v1], self.gold_ind[v2])]:
+        gold_lbl = reln
         self.unmatched_rel2[(self.gold_ind[v1], self.gold_ind[v2])].remove(reln)
-    else:
-      edge_color = TEST_COLOR
-    self.G.add_edge(v1, v2, label=reln, color=edge_color, font_color=edge_color)
+    self.add_edge(v1, v2, reln, gold_lbl)
 
 
 def amr2dict(inst, rel1, rel2):
