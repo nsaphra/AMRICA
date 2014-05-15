@@ -68,26 +68,29 @@ class SmatchGraph:
       self.add_rel2(reln, v1, v2)
 
     # Add gold standard elements not in test
-    node_hashes = {v:k for (k,v) in self.gold_ind.items()} # reverse lookup from gold ind
+    test_ind = {v:k for (k,v) in self.gold_ind.items()} # reverse lookup from gold ind
+
     for (ind, instof) in self.unmatched_inst.items():
-      node_hashes[ind] = 'GOLD %s' % ind
-      self.G.add_node(node_hashes[ind], label=instof, color=GOLD_COLOR, font_color=GOLD_COLOR)
+      test_ind[ind] = 'GOLD %s' % ind
+      self.add_node(test_ind[ind], '', instof)
+
     for ((ind, const), relns) in self.unmatched_rel1.items():
-      #TODO check if const node already in
       for reln in relns:
         # special case: "TOP" specifier not annotated
         if reln == 'TOP':
-          self.G.add_edge(node_hashes[ind], node_hashes[ind], label=reln, color=GOLD_COLOR, font_color=GOLD_COLOR)
+          self.add_edge(test_ind[ind], test_ind[ind], '', reln)
           continue
 
-        const_hash = node_hashes[ind] + ' ' + const
-        if const_hash not in node_hashes:
-          node_hashes[const_hash] = const_hash
-          self.G.add_node(const_hash, label=const, color=GOLD_COLOR, font_color=GOLD_COLOR)
-        self.G.add_edge(node_hashes[ind], node_hashes[const_hash], label=reln, color=GOLD_COLOR, font_color=GOLD_COLOR)
+        const_hash = test_ind[ind] + ' ' + const
+        if const_hash not in test_ind:
+          test_ind[const_hash] = const_hash
+          self.add_node(const_hash, '', const)
+        self.add_edge(test_ind[ind], test_ind[const_hash], '', reln)
+
     for ((ind1, ind2), relns) in self.unmatched_rel2.items():
       for reln in relns:
-        self.G.add_edge(node_hashes[ind1], node_hashes[ind2], label=reln, color=GOLD_COLOR, font_color=GOLD_COLOR)
+        self.add_edge(test_ind[ind1], test_ind[ind2], '', reln)
+
     return self.G
 
   def add_edge(self, v1, v2, test_lbl, gold_lbl):
