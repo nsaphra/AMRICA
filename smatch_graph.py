@@ -122,34 +122,38 @@ class SmatchGraph:
     self.add_node(var, instof, gold_lbl)
 
   def add_rel1(self, reln, var, const):
-    const_match = self.map_fn(const)
+    const_matches = self.map_fn(const)
     gold_edge_lbl = ''
 
-    # special case: "TOP" specifier not annotated
+    # special case: "TOP" specifier for head node
     if reln == 'TOP':
       # find similar TOP edges in gold if they are not labeled with same instance
-      if reln in self.gold_rel1_t.get((self.gold_ind[var], const_match), {}):
-        for ((v_, c_), r_) in self.unmatched_rel1.items():
-          if v_ == self.gold_ind[var] and 'TOP' in r_:
-            gold_edge_lbl = reln
-            self.unmatched_rel1[(v_, c_)].remove('TOP')
-            break
+      for const_match in const_matches:
+        if reln in self.gold_rel1_t.get((self.gold_ind[var], const_match), {}):
+          for ((v_, c_), r_) in self.unmatched_rel1.items():
+            if v_ == self.gold_ind[var] and 'TOP' in r_:
+              self.unmatched_rel1[(v_, c_)].remove('TOP')
+              self.add_edge(var, var, reln, reln)
+              return
       self.add_edge(var, var, reln, gold_edge_lbl)
       return
 
+    # we match const to the highest-ranked match label from the var
     gold_node_lbl = ''
     node_hash = var+' '+const,
-    if (self.gold_ind[var], const_match) in self.gold_rel1_t:
-      gold_node_lbl = const_match
-      #TODO put the metatable editing in the helper fcns?
-      if reln not in self.gold_rel1_t[(self.gold_ind[var], const_match)]:
-        # relns between existing nodes should be in unmatched rel2
-        self.gold_ind[node_hash] = const_match
-        self.unmatched_rel2[(self.gold_ind[var], const_match)] = self.unmatched_rel1[(self.gold_ind[var], const_match)]
-        del self.unmatched_rel1[(self.gold_ind[var], const_match)]
-      else:
-        gold_edge_lbl = reln
-        self.unmatched_rel1[(self.gold_ind[var], const_match)].remove(reln)
+    for const_match in const_matches:
+      if (self.gold_ind[var], const_match) in self.gold_rel1_t:
+        gold_node_lbl = const_match
+        #TODO put the metatable editing in the helper fcns?
+        if reln not in self.gold_rel1_t[(self.gold_ind[var], const_match)]:
+          # relns between existing nodes should be in unmatched rel2
+          self.gold_ind[node_hash] = const_match
+          self.unmatched_rel2[(self.gold_ind[var], const_match)] = self.unmatched_rel1[(self.gold_ind[var], const_match)]
+          del self.unmatched_rel1[(self.gold_ind[var], const_match)]
+        else:
+          gold_edge_lbl = reln
+          self.unmatched_rel1[(self.gold_ind[var], const_match)].remove(reln)
+        break
 
     self.add_node(node_hash, const, gold_node_lbl)
     self.add_edge(var, node_hash, reln, gold_edge_lbl)
