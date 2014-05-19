@@ -30,6 +30,7 @@ from pynlpl.formats.giza import GizaSentenceAlignment
 import codecs
 import smatch_graph
 from smatch_graph import SmatchGraph
+# TODO better config/args system
 
 def hilight_disagreement(test_amrs, gold_amr, aligner=default_aligner):
   """
@@ -112,7 +113,7 @@ def xlang_main(args):
   tgt_align_fh = codecs.open(args.align_tgtamr2snt, encoding='utf8')
 
   amrs_same_sent = []
-  aligner = Amr2AmrAligner(num_best=int(args.num_align), src2tgt_fh=src2tgt_fh, tgt2src_fh=tgt2src_fh, tgt_align_fh=tgt_align_fh)
+  aligner = Amr2AmrAligner(num_best=int(args.num_align_read), num_best_in_file=int(args.num_aligned), src2tgt_fh=src2tgt_fh, tgt2src_fh=tgt2src_fh, tgt_align_fh=tgt_align_fh)
   while True:
     (src_amr_line, src_comments) = amr_metadata.get_amr_line(src_amr_fh)
     if src_amr_line == "":
@@ -176,8 +177,10 @@ if __name__ == '__main__':
     help='In bitext mode, GIZA alignment .NBEST file (see GIZA++ -nbestalignments opt) with target as vcb1.')
   parser.add_argument('--align_tgtamr2snt',
     help='In bitext mode, file aligning target AMR to sentence tokens.')
-  parser.add_argument('--num_align',
-    help='N for GIZA NBEST file.')
+  parser.add_argument('--num_align_read',
+    help='N to read from GIZA NBEST file.')
+  parser.add_argument('--num_aligned',
+    help='N printed to GIZA NBEST file.')
   # TODO make interactive option and option to process a specific range
   args = parser.parse_args(remaining_argv)
 

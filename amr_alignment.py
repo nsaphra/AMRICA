@@ -15,7 +15,7 @@ from collections import defaultdict
 from pynlpl.formats.giza import GizaSentenceAlignment
 
 class Amr2AmrAligner(object):
-  def __init__(self, num_best=20, src2tgt_fh=None, tgt2src_fh=None, tgt_align_fh=None):
+  def __init__(self, num_best=5, num_best_in_file=-1, src2tgt_fh=None, tgt2src_fh=None, tgt_align_fh=None):
     if src2tgt_fh == None or tgt2src_fh == None:
       self.is_default = True
       self.weight_fn = self.dflt_weight_fn
@@ -24,9 +24,12 @@ class Amr2AmrAligner(object):
       self.weight_fn = None
     self.src2tgt_fh = src2tgt_fh
     self.tgt2src_fh = tgt2src_fh
-    self.num_best = num_best
     self.tgt_align_fh = tgt_align_fh
     self.amr2amr = {}
+    self.num_best = num_best
+    self.num_best_in_file = num_best_in_file
+    if num_best_in_file < 0:
+      self.num_best_in_file = num_best
 
   def set_amrs(self, tgt_amr, src_amr):
     if self.is_default:
