@@ -229,6 +229,6 @@ class AMR(object):
               const_dict[v2[0]]=v2[1]
       link_list.append(link_dict)
       const_attr_list.append(const_dict)
-      const_attr_list[0]["TOP"]=var_value_list[0] # add TOP relation
+      link_list[0][var_list[0]]="TOP"
     result_amr=AMR(var_list,var_value_list,link_list,const_attr_list)
     return result_amr

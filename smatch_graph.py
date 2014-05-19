@@ -75,11 +75,6 @@ class SmatchGraph:
 
     for ((ind, const), relns) in self.unmatched_rel1.items():
       for reln in relns:
-        # special case: "TOP" specifier not annotated
-        if reln == 'TOP':
-          self.add_edge(test_ind[ind], test_ind[ind], '', reln)
-          continue
-
         const_hash = test_ind[ind] + ' ' + const
         if const_hash not in test_ind:
           test_ind[const_hash] = const_hash
@@ -124,19 +119,6 @@ class SmatchGraph:
   def add_rel1(self, reln, var, const):
     const_matches = self.map_fn(const)
     gold_edge_lbl = ''
-
-    # special case: "TOP" specifier for head node
-    if reln == 'TOP':
-      # find similar TOP edges in gold if they are not labeled with same instance
-      for const_match in const_matches:
-        if reln in self.gold_rel1_t.get((self.gold_ind[var], const_match), {}):
-          for ((v_, c_), r_) in self.unmatched_rel1.items():
-            if v_ == self.gold_ind[var] and 'TOP' in r_:
-              self.unmatched_rel1[(v_, c_)].remove('TOP')
-              self.add_edge(var, var, reln, reln)
-              return
-      self.add_edge(var, var, reln, gold_edge_lbl)
-      return
 
     # we match const to the highest-ranked match label from the var
     gold_node_lbl = ''
