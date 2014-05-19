@@ -71,9 +71,11 @@ def monolingual_main(args):
     if amr_line == "":
       break
     cur_amr = amr_metadata.AmrMeta.from_parse(amr_line, comments)
-    assert 'id' in cur_amr.metadata and 'annotator' in cur_amr.metadata
+    assert 'id' in cur_amr.metadata
     if not cur_id:
       cur_id = cur_amr.metadata['id']
+    if 'annotator' not in cur_amr.metadata:
+      cur_amr.metadata['annotator'] = ''
 
     if cur_id != cur_amr.metadata['id']:
       gold_amr = amrs_same_sent[0]

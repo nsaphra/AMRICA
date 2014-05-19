@@ -63,13 +63,11 @@ class Amr2AmrAligner(object):
 
   def const_map_fn(self, const):
     """ Get all const strings from source amr that could map to target const """
-    const_matches = []
+    const_matches = [const]
     for (t,s) in filter(lambda (t,s): t == const, self.amr2amr):
-      if self.amr2amr[(t,s)] > 0: # weight > 0
+      if self.weight_fn(t,s) > 0: # weight > 0
         const_matches.append(s)
-    if len(const_matches) == 0:
-      return [const.lower()]
-    return sorted(const_matches, key=lambda x: self.amr2amr[(const, x)])
+    return sorted(const_matches, key=lambda x: self.weight_fn(const, x))
 
   @staticmethod
   def get_all_labels(amr):
