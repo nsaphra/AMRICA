@@ -30,6 +30,7 @@ from pynlpl.formats.giza import GizaSentenceAlignment
 import codecs
 import smatch_graph
 from smatch_graph import SmatchGraph
+from pickle import Pickler
 # TODO better config/args system
 
 def hilight_disagreement(test_amrs, gold_amr, aligner=default_aligner):
@@ -64,6 +65,12 @@ def hilight_disagreement(test_amrs, gold_amr, aligner=default_aligner):
 
 def monolingual_main(args):
   infile = codecs.open(args.infile, encoding='utf8')
+  pickle_fh = None
+  pickler = None
+  if args.pickle:
+    pickle_fh = codecs.open(args.pickle, 'w', encoding='utf8')
+    pickler = Pickler(pickle_fh)
+
   amrs_same_sent = []
   cur_id = ""
   while True:
@@ -89,6 +96,8 @@ def monolingual_main(args):
 
       for (a, g) in zip(test_amrs, amr_graphs):
         test_anno = a.metadata['annotator']
+        if pickler:
+          pickler.dump(g)
         
         ag = nx.to_agraph(g)
         ag.layout(prog='dot')
@@ -104,6 +113,8 @@ def monolingual_main(args):
     amrs_same_sent.append(cur_amr)
 
   infile.close()
+  if pickle_fh:
+    pickle_fh.close()
 
 
 def xlang_main(args):
@@ -113,6 +124,12 @@ def xlang_main(args):
   src2tgt_fh = codecs.open(args.align_src2tgt, encoding='utf8')
   tgt2src_fh = codecs.open(args.align_tgt2src, encoding='utf8')
   tgt_align_fh = codecs.open(args.align_tgtamr2snt, encoding='utf8')
+
+  pickle_fh = None
+  pickler = None
+  if args.pickle:
+    pickle_fh = codecs.open(args.pickle, 'w', encoding='utf8')
+    pickler = Pickler(pickle_fh)
 
   amrs_same_sent = []
   aligner = Amr2AmrAligner(num_best=int(args.num_align_read), num_best_in_file=int(args.num_aligned), src2tgt_fh=src2tgt_fh, tgt2src_fh=tgt2src_fh, tgt_align_fh=tgt_align_fh)
@@ -130,6 +147,8 @@ def xlang_main(args):
     tgt_sent = tgt_amr.metadata['snt']
 
     amr_graphs = hilight_disagreement([tgt_amr], src_amr, aligner=aligner)
+    if pickler:
+      pickler.dump(amr_graphs[0])
     ag = nx.to_agraph(amr_graphs[0])
     ag.layout(prog='dot')
     ag.draw('%s/%s.png' % (args.outdir, cur_id))
@@ -142,6 +161,8 @@ def xlang_main(args):
   tgt_amr_fh.close()
   src2tgt_fh.close()
   tgt2src_fh.close()
+  if pickle_fh:
+    pickle_fh.close()
 
 
 if __name__ == '__main__':
@@ -183,6 +204,8 @@ if __name__ == '__main__':
     help='N to read from GIZA NBEST file.')
   parser.add_argument('--num_aligned',
     help='N printed to GIZA NBEST file.')
+  parser.add_argument('-p', '--pickle',
+    help='File to dump pickled graphs to.')
   # TODO make interactive option and option to process a specific range
   args = parser.parse_args(remaining_argv)
 
