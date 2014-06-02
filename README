@@ -1,7 +1,7 @@
 This is a script for visualizing AMR annotation disagreements. It expects an AMR file with comment sections describing the sentence ID as input, and it outputs a graphviz'd up PNG for each gold-test sentence pair.
 
 Use like:
-./disagree.py -i input_amrs.txt -o output_dir/
+./disagree/disagree.py -i input_amrs.txt -o output_dir/
 
 It will print an AMR graph with red elements for things in the test AMR and not gold and blue elements for anything in gold and not in test.
 
