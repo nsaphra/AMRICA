@@ -122,7 +122,7 @@ class SmatchGraph:
 
     # we match const to the highest-ranked match label from the var
     gold_node_lbl = ''
-    node_hash = var+' '+const,
+    node_hash = var+' '+const
     for const_match in const_matches:
       if (self.gold_ind[var], const_match) in self.gold_rel1_t:
         gold_node_lbl = const_match
