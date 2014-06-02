@@ -18,6 +18,7 @@ should be in the same order of sentences between the files.
 
 import argparse
 import networkx as nx
+from networkx.readwrite import json_graph
 import amr_metadata
 from amr_alignment import Amr2AmrAligner
 from amr_alignment import default_aligner
@@ -30,7 +31,6 @@ from pynlpl.formats.giza import GizaSentenceAlignment
 import codecs
 import smatch_graph
 from smatch_graph import SmatchGraph
-from pickle import Pickler
 # TODO better config/args system
 
 def hilight_disagreement(test_amrs, gold_amr, aligner=default_aligner):
@@ -42,14 +42,14 @@ def hilight_disagreement(test_amrs, gold_amr, aligner=default_aligner):
   """
 
   amr_graphs = []
-  gold_label="b"
+  gold_label=u'b'
   gold_amr.rename_node(gold_label)
   (gold_inst, gold_rel1, gold_rel2) = gold_amr.get_triples2()
   (gold_inst_t, gold_rel1_t, gold_rel2_t) = smatch_graph.amr2dict(gold_inst, gold_rel1, gold_rel2)
 
   for a in test_amrs:
     aligner.set_amrs(a, gold_amr)
-    test_label="a"
+    test_label=u'a'
     a.rename_node(test_label)
     (test_inst, test_rel1, test_rel2) = a.get_triples2()
     (best_match, best_match_num) = smatch.get_fh(test_inst, test_rel1, test_rel2,
@@ -65,11 +65,9 @@ def hilight_disagreement(test_amrs, gold_amr, aligner=default_aligner):
 
 def monolingual_main(args):
   infile = codecs.open(args.infile, encoding='utf8')
-  pickle_fh = None
-  pickler = None
-  if args.pickle:
-    pickle_fh = codecs.open(args.pickle, 'w', encoding='utf8')
-    pickler = Pickler(pickle_fh)
+  json_fh = None
+  if args.json:
+    json_fh = codecs.open(args.json, 'w', encoding='utf8')
 
   amrs_same_sent = []
   cur_id = ""
@@ -96,9 +94,9 @@ def monolingual_main(args):
 
       for (a, g) in zip(test_amrs, amr_graphs):
         test_anno = a.metadata['annotator']
-        if pickler:
-          pickler.dump(g)
-        
+        if json_fh:
+          json_fh.write(json_graph.dumps(g) + '\n')
+
         ag = nx.to_agraph(g)
         ag.layout(prog='dot')
         ag.draw('%s/%s_annoted_%s_%s.png' % (args.outdir, cur_id, gold_anno, test_anno))
@@ -113,8 +111,8 @@ def monolingual_main(args):
     amrs_same_sent.append(cur_amr)
 
   infile.close()
-  if pickle_fh:
-    pickle_fh.close()
+  if json_fh:
+    json_fh.close()
 
 
 def xlang_main(args):
@@ -125,11 +123,9 @@ def xlang_main(args):
   tgt2src_fh = codecs.open(args.align_tgt2src, encoding='utf8')
   tgt_align_fh = codecs.open(args.align_tgtamr2snt, encoding='utf8')
 
-  pickle_fh = None
-  pickler = None
-  if args.pickle:
-    pickle_fh = codecs.open(args.pickle, 'w', encoding='utf8')
-    pickler = Pickler(pickle_fh)
+  json_fh = None
+  if args.json:
+    json_fh = codecs.open(args.json, 'w', encoding='utf8')
 
   amrs_same_sent = []
   aligner = Amr2AmrAligner(num_best=int(args.num_align_read), num_best_in_file=int(args.num_aligned), src2tgt_fh=src2tgt_fh, tgt2src_fh=tgt2src_fh, tgt_align_fh=tgt_align_fh)
@@ -147,8 +143,8 @@ def xlang_main(args):
     tgt_sent = tgt_amr.metadata['snt']
 
     amr_graphs = hilight_disagreement([tgt_amr], src_amr, aligner=aligner)
-    if pickler:
-      pickler.dump(amr_graphs[0])
+    if json_fh:
+          json_fh.write(json_graph.dumps(amr_graphs[0]) + '\n')
     ag = nx.to_agraph(amr_graphs[0])
     ag.layout(prog='dot')
     ag.draw('%s/%s.png' % (args.outdir, cur_id))
@@ -157,12 +153,12 @@ def xlang_main(args):
       print("ID: %s\n Sentence: %s\n Sentence: %s" % (cur_id, src_sent, tgt_sent))
     #raw_input("Press enter to continue: ")
 
-  src_amr_fh.close()
+  src_amr_fh.close()  
   tgt_amr_fh.close()
   src2tgt_fh.close()
   tgt2src_fh.close()
-  if pickle_fh:
-    pickle_fh.close()
+  if json_fh:
+    json_fh.close()
 
 
 if __name__ == '__main__':
@@ -204,8 +200,8 @@ if __name__ == '__main__':
     help='N to read from GIZA NBEST file.')
   parser.add_argument('--num_aligned',
     help='N printed to GIZA NBEST file.')
-  parser.add_argument('-p', '--pickle',
-    help='File to dump pickled graphs to.')
+  parser.add_argument('-j', '--json',
+    help='File to dump json graphs to.')
   # TODO make interactive option and option to process a specific range
   args = parser.parse_args(remaining_argv)
 

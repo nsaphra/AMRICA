@@ -70,7 +70,7 @@ class SmatchGraph:
     test_ind = {v:k for (k,v) in self.gold_ind.items()} # reverse lookup from gold ind
 
     for (ind, instof) in self.unmatched_inst.items():
-      test_ind[ind] = 'GOLD %s' % ind
+      test_ind[ind] = u'GOLD %s' % ind
       self.add_node(test_ind[ind], '', instof)
 
     for ((ind, const), relns) in self.unmatched_rel1.items():
@@ -99,13 +99,13 @@ class SmatchGraph:
   def add_node(self, v, test_lbl, gold_lbl):
     assert(gold_lbl or test_lbl)
     if gold_lbl == '':
-      self.G.add_node(v, label="%s / *" % test_lbl, test_label=test_lbl, gold_label=gold_lbl, color=TEST_COLOR)
+      self.G.add_node(v, label=u'%s / *' % test_lbl, test_label=test_lbl, gold_label=gold_lbl, color=TEST_COLOR)
     elif test_lbl == '':
-      self.G.add_node(v, label="* / %s" % gold_lbl, test_label=test_lbl, gold_label=gold_lbl, color=GOLD_COLOR)
+      self.G.add_node(v, label=u'* / %s' % gold_lbl, test_label=test_lbl, gold_label=gold_lbl, color=GOLD_COLOR)
     elif test_lbl == gold_lbl:
       self.G.add_node(v, label=test_lbl, test_label=test_lbl, gold_label=gold_lbl, color=DFLT_COLOR)
     else:
-      self.G.add_node(v, label="%s / %s" % (test_lbl, gold_lbl), test_label=test_lbl, gold_label=gold_lbl, color=DFLT_COLOR)
+      self.G.add_node(v, label=u'%s / %s' % (test_lbl, gold_lbl), test_label=test_lbl, gold_label=gold_lbl, color=DFLT_COLOR)
 
   def add_inst(self, ind, var, instof):
     self.gold_ind[var] = self.match[ind]
@@ -165,7 +165,7 @@ class SmatchGraph:
       if not node_is_live[v]:
         self.unmatched_inst[self.gold_ind[v]] = self.G.node[v]['gold_label']
         self.G.node[v]['gold_label'] = ''
-        self.G.node[v]['label'] = "%s / *" % self.G.node[v]['test_label']
+        self.G.node[v]['label'] = u'%s / *' % self.G.node[v]['test_label']
         self.G.node[v]['color'] = TEST_COLOR
         del self.gold_ind[v]
 
