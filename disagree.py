@@ -19,10 +19,8 @@ should be in the same order of sentences between the files.
 import argparse
 import networkx as nx
 from networkx.readwrite import json_graph
-from disagree import *
-import amr_metadata
-from amr_alignment import Amr2AmrAligner
-from amr_alignment import default_aligner
+from compare_smatch.amr_alignment import Amr2AmrAligner
+from compare_smatch.amr_alignment import default_aligner
 from smatch import smatch
 from collections import defaultdict
 import pygraphviz as pgz
@@ -30,8 +28,9 @@ import copy
 import ConfigParser
 from pynlpl.formats.giza import GizaSentenceAlignment
 import codecs
-import smatch_graph
-from smatch_graph import SmatchGraph
+from compare_smatch import amr_metadata
+from compare_smatch import smatch_graph
+from compare_smatch.smatch_graph import SmatchGraph
 # TODO better config/args system
 
 def hilight_disagreement(test_amrs, gold_amr, aligner=default_aligner):
@@ -129,7 +128,7 @@ def xlang_main(args):
     json_fh = codecs.open(args.json, 'w', encoding='utf8')
 
   amrs_same_sent = []
-  aligner = Amr2AmrAligner(num_best=int(args.num_align_read), num_best_in_file=int(args.num_aligned), src2tgt_fh=src2tgt_fh, tgt2src_fh=tgt2src_fh, tgt_align_fh=tgt_align_fh)
+  aligner = Amr2AmrAligner(num_best=int(args.num_align_read), num_best_in_file=int(args.num_aligned_in_file), src2tgt_fh=src2tgt_fh, tgt2src_fh=tgt2src_fh, tgt_align_fh=tgt_align_fh)
   while True:
     (src_amr_line, src_comments) = amr_metadata.get_amr_line(src_amr_fh)
     if src_amr_line == "":
@@ -199,7 +198,7 @@ if __name__ == '__main__':
     help='In bitext mode, file aligning target AMR to sentence tokens.')
   parser.add_argument('--num_align_read',
     help='N to read from GIZA NBEST file.')
-  parser.add_argument('--num_aligned',
+  parser.add_argument('--num_aligned_in_file',
     help='N printed to GIZA NBEST file.')
   parser.add_argument('-j', '--json',
     help='File to dump json graphs to.')

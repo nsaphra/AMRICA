@@ -28,8 +28,10 @@ class Amr2AmrAligner(object):
     self.amr2amr = {}
     self.num_best = num_best
     self.num_best_in_file = num_best_in_file
+    self.last_nbest_line = {self.src2tgt_fh:None, self.tgt2src_fh:None}
     if num_best_in_file < 0:
       self.num_best_in_file = num_best
+    assert self.num_best_in_file >= self.num_best
 
   def set_amrs(self, tgt_amr, src_amr):
     if self.is_default:
@@ -41,7 +43,7 @@ class Amr2AmrAligner(object):
     src_labels = self.get_all_labels(src_amr)
 
     sent2sent_union = align_sent2sent_union(self.tgt_toks, self.src_toks,
-      get_nbest_alignments(self.src2tgt_fh, self.num_best), get_nbest_alignments(self.tgt2src_fh, self.num_best))
+      self.get_nbest_alignments(self.src2tgt_fh), self.get_nbest_alignments(self.tgt2src_fh))
 
     tgt_align = get_amr2sent_lines(self.tgt_align_fh)
     amr2sent_tgt = align_amr2sent_en(tgt_labels, self.tgt_toks, tgt_align)
@@ -79,6 +81,45 @@ class Amr2AmrAligner(object):
   @staticmethod
   def dflt_weight_fn(tgt_label, src_label):
     return 1.0 if tgt_label.lower() == src_label.lower() else 0.0
+
+  def get_nbest_alignments(self, fh):
+    """ Read an entry from the giza alignment .A3 NBEST file. """
+    aligns = []
+    curr_sent = -1
+    start_ind = 0
+    if self.last_nbest_line[fh]:
+      if self.num_best > 0:
+        aligns.append(self.last_nbest_line[fh])
+      start_ind = 1
+      curr_sent = self.last_nbest_line[fh][0].index
+      self.last_nbest_line[fh] = None
+
+    for ind in range(start_ind, self.num_best_in_file):
+      meta_line = fh.readline()
+      if meta_line == "":
+        if len(aligns) == 0:
+          return None
+        else:
+          break
+
+      meta = re.match("# Sentence pair \((\d+)\) "+
+        "source length (\d+) target length (\d+) "+
+        "alignment score : (.+)", meta_line)
+      if not meta:
+        raise Exception
+      sent = int(meta.group(1))
+      if curr_sent < 0:
+        curr_sent = sent
+      score = float(meta.group(4))
+
+      tgt_line = fh.readline()
+      src_line = fh.readline()
+      if sent != curr_sent:
+        self.last_nbest_line[fh] = (GizaSentenceAlignment(src_line, tgt_line, sent), score)
+        break
+      if ind < self.num_best:
+        aligns.append((GizaSentenceAlignment(src_line, tgt_line, sent), score))
+    return aligns
 
 default_aligner = Amr2AmrAligner()
 
@@ -156,23 +197,3 @@ def align_sent2sent_union(tgt_toks, src_toks, src2tgt, tgt2src):
       tok_align[tgtind][srcind] = \
         (src2tgt_align[tgtind][srcind] + tgt2src_align[srcind][tgtind]) / 2.0
   return tok_align
-
-def get_nbest_alignments(fh, num_nbest):
-  """ Read an entry from the giza alignment .A3 NBEST file. """
-  aligns = []
-  for ind in range(num_nbest):
-    meta_line = fh.readline()
-    if meta_line == "":
-      return None
-
-    meta = re.match("# Sentence pair \((\d+)\) "+
-      "source length (\d+) target length (\d+) "+
-      "alignment score : (.+)", meta_line)
-    if not meta:
-      raise Exception
-    sent = int(meta.group(1))
-    score = float(meta.group(4))
-    tgt_line = fh.readline()
-    src_line = fh.readline()
-    aligns.append((GizaSentenceAlignment(src_line, tgt_line, sent), score))
-  return aligns
