@@ -52,8 +52,8 @@ class Amr2AmrAligner(object):
     self.amr2amr = defaultdict(float)
     for (tgt_lbl, tgt_scores) in amr2sent_tgt.items():
       for (src_lbl, src_scores) in amr2sent_src.items():
-        if src_lbl == tgt_lbl:
-          self.amr2amr[(tgt_lbl, src_lbl)] = 1.0
+        if src_lbl.lower() == tgt_lbl.lower():
+          self.amr2amr[(tgt_lbl, src_lbl)] += 1.0
           continue
         for (t, t_score) in enumerate(tgt_scores):
           for (s, s_score) in enumerate(src_scores):
