@@ -9,7 +9,7 @@ AMR input file expected in format where comments above each annotation indicate
 the sentence like so:
 
 # ::id DF-170-181103-888_2097.1 ::date 2013-09-16T07:15:31 ::annotator ANON-01 ::preferred
-# ::snt This is a sentence.
+# ::tok This is a sentence.
 
 For monolingual disagreement, all annotations of some sentence should occur
 consecutively in the monolingual annotation file. For bilingual, annotations
@@ -90,7 +90,7 @@ def monolingual_main(args):
       amr_graphs = hilight_disagreement(test_amrs, gold_amr)
 
       gold_anno = gold_amr.metadata['annotator']
-      sent = gold_amr.metadata['snt']
+      sent = gold_amr.metadata['tok']
 
       for (a, g) in zip(test_amrs, amr_graphs):
         test_anno = a.metadata['annotator']
@@ -139,8 +139,8 @@ def xlang_main(args):
     assert src_amr.metadata['id'] == tgt_amr.metadata['id']
     cur_id = src_amr.metadata['id']
 
-    src_sent = src_amr.metadata['snt']
-    tgt_sent = tgt_amr.metadata['snt']
+    src_sent = src_amr.metadata['tok']
+    tgt_sent = tgt_amr.metadata['tok']
 
     amr_graphs = hilight_disagreement([tgt_amr], src_amr, aligner=aligner)
     if json_fh:

@@ -37,8 +37,8 @@ class Amr2AmrAligner(object):
     if self.is_default:
       return
 
-    self.tgt_toks = tgt_amr.metadata['snt'].strip().split()
-    self.src_toks = src_amr.metadata['snt'].strip().split()
+    self.tgt_toks = tgt_amr.metadata['tok'].strip().split()
+    self.src_toks = src_amr.metadata['tok'].strip().split()
     tgt_labels = self.get_all_labels(tgt_amr)
     src_labels = self.get_all_labels(src_amr)
 
