@@ -172,7 +172,7 @@ def compute_pool(test_instance,test_relation1,test_relation2,gold_instance,gold_
                weight_dict[cur_k1][-1]=1
     return (candidate_match, weight_dict) 
 
-def init_match(candidate_match,test_instance,gold_instance):
+def init_match(candidate_match,test_instance,gold_instance,weight_fn):
     """Initialize match based on the word match
        Args: 
            candidate_match: candidate variable match list
@@ -191,13 +191,18 @@ def init_match(candidate_match,test_instance,gold_instance):
          continue
       #word in the test instance
       test_word=test_instance[i][2]
+      max_score=0.0
+      max_match=-1
       for j,m_id in enumerate(c2):
         gold_word=gold_instance[int(m_id)][2]
-        if test_word==gold_word:
-           if int(m_id) not in matched_dict:
-              result.append(int(m_id))
-              matched_dict[int(m_id)]=1
-              break
+        curr_score = weight_fn(gold_word, test_word)
+        if curr_score > max_score:
+          if int(m_id) not in matched_dict:
+            max_score = curr_score
+            max_match = int(m_id)
+      if max_score > 0:
+        result.append(max_match)
+        matched_dict[max_match]=1
            #   found=True
       if len(result)==i:
          no_word_match.append(i)
@@ -497,7 +502,7 @@ def get_fh(test_instance,test_relation1,test_relation2,gold_instance,gold_relati
          print >> sys.stderr,"Iteration",i
       if i==0:
          #smart initialization
-         start_match=init_match(candidate_match,test_instance,gold_instance)
+         start_match=init_match(candidate_match,test_instance,gold_instance,instance_weight_fn)
       else:
          #random initialization
          start_match=get_random_sol(candidate_match)
