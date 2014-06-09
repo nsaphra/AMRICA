@@ -15,7 +15,7 @@ from collections import defaultdict
 from pynlpl.formats.giza import GizaSentenceAlignment
 
 class Amr2AmrAligner(object):
-  def __init__(self, num_best=5, num_best_in_file=-1, src2tgt_fh=None, tgt2src_fh=None, tgt_align_fh=None):
+  def __init__(self, num_best=5, num_best_in_file=-1, src2tgt_fh=None, tgt2src_fh=None):
     if src2tgt_fh == None or tgt2src_fh == None:
       self.is_default = True
       self.weight_fn = self.dflt_weight_fn
@@ -24,7 +24,6 @@ class Amr2AmrAligner(object):
       self.weight_fn = None
     self.src2tgt_fh = src2tgt_fh
     self.tgt2src_fh = tgt2src_fh
-    self.tgt_align_fh = tgt_align_fh
     self.amr2amr = {}
     self.num_best = num_best
     self.num_best_in_file = num_best_in_file
@@ -39,15 +38,18 @@ class Amr2AmrAligner(object):
 
     self.tgt_toks = tgt_amr.metadata['tok'].strip().split()
     self.src_toks = src_amr.metadata['tok'].strip().split()
-    tgt_labels = self.get_all_labels(tgt_amr)
-    src_labels = self.get_all_labels(src_amr)
 
     sent2sent_union = align_sent2sent_union(self.tgt_toks, self.src_toks,
       self.get_nbest_alignments(self.src2tgt_fh), self.get_nbest_alignments(self.tgt2src_fh))
 
-    tgt_align = get_amr2sent_lines(self.tgt_align_fh)
-    amr2sent_tgt = align_amr2sent_en(tgt_labels, self.tgt_toks, tgt_align)
-    amr2sent_src = align_amr2sent_dflt(src_labels, self.src_toks)
+    if 'alignments' in tgt_amr.metadata:
+      amr2sent_tgt = align_amr2sent_jamr(tgt_amr, self.tgt_toks, tgt_amr.metadata['alignments'].strip().split())
+    else:
+      amr2sent_tgt = align_amr2sent_dflt(tgt_amr, self.tgt_toks)
+    if 'alignments' in src_amr.metadata:
+      amr2sent_src = align_amr2sent_jamr(src_amr, self.src_toks, src_amr.metadata['alignments'].strip().split())
+    else:
+      amr2sent_src = align_amr2sent_dflt(src_amr, self.src_toks)
 
     self.amr2amr = defaultdict(float)
     for (tgt_lbl, tgt_scores) in amr2sent_tgt.items():
@@ -70,13 +72,6 @@ class Amr2AmrAligner(object):
       if self.weight_fn(t,s) > 0: # weight > 0
         const_matches.append(s)
     return sorted(const_matches, key=lambda x: self.weight_fn(const, x))
-
-  @staticmethod
-  def get_all_labels(amr):
-    ret = [v for v in amr.var_values]
-    for l in amr.const_links:
-      ret += [v for (k,v) in l.items()]
-    return ret
 
   @staticmethod
   def dflt_weight_fn(tgt_label, src_label):
@@ -123,18 +118,14 @@ class Amr2AmrAligner(object):
 
 default_aligner = Amr2AmrAligner()
 
-def get_amr2sent_lines(fh):
-  lines = []
-  line = fh.readline()
-  while line and line.strip():
-    data = line.strip().lower()
-    line = fh.readline()
-    if data.startswith('#'):
-      continue
-    lines.append(data)
-  return lines
+def get_all_labels(amr):
+  ret = [v for v in amr.var_values]
+  for l in amr.const_links:
+    ret += [v for (k,v) in l.items()]
+  return ret
 
-def align_amr2sent_dflt(labels, sent):
+def align_amr2sent_dflt(amr, sent):
+  labels = get_all_labels(amr)
   align = {l:[0.0 for tok in sent] for l in labels}
   for label in labels:
     lbl = label.lower()
@@ -149,29 +140,76 @@ def align_amr2sent_dflt(labels, sent):
       align[label][t_ind] = 1.0 / len(matches)
   return align
 
-def align_amr2sent_en(labels, sent, align_lines):
-  maps = defaultdict(set)
-  for line in align_lines:
-    data = line.split()
-    maps[data[0]] |= set(data[1:])
+def parse_jamr_alignment(chunk):
+  (tok_range, nodes_str) = chunk.split('|')
+  (start_tok, end_tok) = tok_range.split('-')
+  node_list = nodes_str.split('+')
+  return (int(start_tok), int(end_tok), node_list)
 
+def align_label2toks_en(label, sent, weights, start_tok=0, end_tok=-1, default_full=False):
+  """
+  label: node label to map
+  sent: token list to map label to
+  weights: list to be modified with new weights
+  default_full: set True to have the default distribution sum to 1 instead of 0
+  return list mapping token index to match weight
+  """
+  # TODO frumious hack. should set up actual stemmer sometime.
+  if end_tok < 0:
+    end_tok = len(sent)
+
+  lbl = label.lower()
+  stem = lbl
+  wordnet = re.match("(.+)-\d\d", lbl)
+  if wordnet:
+    stem = wordnet.group(1)
+  if len(stem) > 4: # arbitrary
+    if len(stem) > 5:
+      stem = stem[:-2]
+    else:
+      stem = stem[:-1]
+
+  def is_match(tok):
+    return tok == lbl or \
+      (len(tok) >= len(stem) and tok[:len(stem)] == stem)
+
+  matches = [t_ind+start_tok for (t_ind, t) in enumerate(sent[start_tok:end_tok]) if is_match(t.lower())]
+  if len(matches) == 0:
+    if default_full:
+      matches = range(start_tok, end_tok)
+    else:
+      return weights
+  for t_ind in matches:
+    weights[t_ind] += 1.0 / len(matches)
+  return weights
+
+def align_amr2sent_jamr(amr, sent, jamr_line):
+  """
+  amr: an amr to map nodes to sentence toks
+  sent: sentence array of toks
+  jamr_line: metadata field 'alignments', aligned with jamr
+  return dict mapping amr node labels to match weights for each tok in sent
+  """
+  labels = get_all_labels(amr)
+  labels_remain = {label:labels.count(label) for label in labels}
   align = {l:[0.0 for tok in sent] for l in labels}
-  # TODO This is not a final version -- need to get jamr aligner working!
-  for label in labels:
-    lbl = label.lower()
-    stem = lbl
-    stem = stem.rstrip('s')
-    wordnet = re.match("(.+)-\d\d", lbl)
-    if wordnet:
-      stem = wordnet.group(1)
-    def is_match(tok):
-      return tok == lbl or \
-        (len(tok) >= len(stem) and tok[:len(stem)] == stem) or \
-        tok in maps[lbl]
 
-    matches = [t_ind for (t_ind, t) in enumerate(sent) if is_match(t.lower())]
-    for t_ind in matches:
-      align[label][t_ind] = 1.0 / len(matches)
+  for chunk in jamr_line:
+    (start_tok, end_tok, node_list) = parse_jamr_alignment(chunk)
+    for node_path in node_list:
+      label = amr.path_dict[node_path]
+      align[label] = align_label2toks_en(label, sent, align[label], start_tok=start_tok, end_tok=end_tok, default_full=True)
+      labels_remain[label] -= 1
+
+  #TODO should really switch from a label-token-label alignment model to node-token-node
+  for label in labels_remain:
+    if labels_remain[label] > 0:
+      align[label] = align_label2toks_en(label, sent, align[label])
+  for label in align:
+    z = sum(align[label])
+    if z == 0:
+      continue
+    align[label] = [w/z for w in align[label]]
   return align
 
 def align_sent2sent(tgt_toks, src_toks, alignment_scores):

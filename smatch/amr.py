@@ -11,7 +11,11 @@ import sys
 from collections import defaultdict
 
 class AMR(object):
-  def __init__(self,var_list=None,var_value_list=None,link_list=None,const_link_list=None):
+  def __init__(self,var_list=None,var_value_list=None,link_list=None,const_link_list=None,path_dict=None):
+    """
+    path_dict: maps 0.1.0 to the label (inst or const) of the 0-indexed child
+      of the 1-indexed child of the 0th node (head)
+    """
     if var_list is None:
        self.nodes=[]  #AMR variables 
        self.root=None
@@ -33,7 +37,11 @@ class AMR(object):
        self.const_links=[]
     else:
        self.const_links=const_link_list[:]
-    
+    if path_dict is None:
+      self.path_dict = {}
+    else:
+      self.path_dict = path_dict
+
 
   def add_node(node_value):
     self.nodes.append(node_value)
@@ -89,7 +97,7 @@ class AMR(object):
       return self.__str__()
 
   def out_amr(self):
-      self.__str__()    
+      self.__str__()
 
   @staticmethod
   def parse_AMR_line(line):
@@ -103,6 +111,40 @@ class AMR(object):
     cur_attr_name="" #current attribute name
     attr_list=[] #each entry is an attr dict
     in_quote=False
+    curr_path = ['0']
+    path_dict = {}
+    path_lookup = {} # var, reln, const to path key
+
+    def remove_from_paths(path):
+      """ Adjust all paths in path_dict by removing the node at path """
+      node_ind = int(path[-1])
+      depth = len(path)-1
+      prefix = '.'.join(path[:-1])+'.'
+      # remove node from path_dict keys
+      new_path_dict = {}
+      for (k,v) in path_dict.items():
+        if k.startswith(prefix):
+          k_arr = k.split('.')
+          curr_ind = int(k_arr[depth])
+          if curr_ind == node_ind:
+            continue # deleting node
+          elif curr_ind > node_ind:
+            k_arr[depth] = str(curr_ind - 1)
+            new_path_dict['.'.join(k_arr)] = v
+            continue
+        new_path_dict[k] = v
+      return new_path_dict
+
+      # remove node from path_lookup vals
+      for (k,v) in path_lookup.items():
+        if v[:depth] == path[:depth]:
+          curr_ind = int(v[depth])
+          if curr_ind == node_ind:
+            del path_lookup[k]
+          if curr_ind > node_ind:
+            v[depth] = str(curr_ind - 1)
+
+
     for i,c in enumerate(line.strip()):
       if c==" ":
          if in_quote:
@@ -117,15 +159,15 @@ class AMR(object):
          else:
             in_quote=True
       elif c=="(":
-         if in_quote:
-            continue
-         if state==2:
-            if cur_attr_name!="":
-               print >> sys.stderr, "Format error when processing ",line[0:i+1] 
-               return None
-            cur_attr_name="".join(cur_charseq).strip()
-            cur_charseq[:]=[]
-         state=1
+        if in_quote:
+          continue
+        if state==2:
+          if cur_attr_name!="":
+            print >> sys.stderr, "Format error when processing ",line[0:i+1] 
+            return None
+          cur_attr_name="".join(cur_charseq).strip()
+          cur_charseq[:]=[]
+        state=1
       elif c==":":
          if in_quote:
             continue
@@ -134,6 +176,8 @@ class AMR(object):
             cur_charseq[:]=[]
             cur_var_name=stack[-1]
             var_dict[cur_var_name]=var_value
+            path_dict['.'.join(curr_path)] = var_value
+            curr_path.append('0')
          elif state==2: #: ...:
             temp_attr_value="".join(cur_charseq) 
             cur_charseq[:]=[]
@@ -146,10 +190,16 @@ class AMR(object):
             if len(stack)==0:
               print >> sys.stderr, "Error in processing",line[:i],attr_name,attr_value
               return None
+            #TODO should all labels in quotes be consts?
             if attr_value not in var_dict:
               var_attr_dict2[stack[-1]].append((attr_name,attr_value))
+              path_dict['.'.join(curr_path)] = attr_value
+              path_lookup[(stack[-1], attr_name, attr_value)] = [i for i in curr_path]
+              curr_path[-1] = str(int(curr_path[-1]) + 1)
             else:
               var_attr_dict1[stack[-1]].append((attr_name,attr_value))
+         else:
+            curr_path[-1] = str(int(curr_path[-1]) + 1)
          state=2
       elif c=="/":
         if in_quote:
@@ -193,11 +243,17 @@ class AMR(object):
                var_attr_dict2[stack[-1]].append((attr_name,attr_value))
             else:
                var_attr_dict1[stack[-1]].append((attr_name,attr_value))
+            path_dict['.'.join(curr_path)] = attr_value
+            path_lookup[(stack[-1], attr_name, attr_value)] = [i for i in curr_path]
+            curr_path.pop()
          elif state==3:
             var_value="".join(cur_charseq) 
             cur_charseq[:]=[]
             cur_var_name=stack[-1]
             var_dict[cur_var_name]=var_value
+            path_dict['.'.join(curr_path)] = var_value
+         else:
+            curr_path.pop()
          stack.pop()
          cur_attr_name=""
          state=4 
@@ -225,10 +281,11 @@ class AMR(object):
               const_dict[v2[0]]=v2[1][1:-1]
            elif v2[1] in var_dict:
               link_dict[v2[1]]=v2[0]
+              path_dict = remove_from_paths(path_lookup[(v, v2[0], v2[1])])
            else:
               const_dict[v2[0]]=v2[1]
       link_list.append(link_dict)
       const_attr_list.append(const_dict)
       link_list[0][var_list[0]]="TOP"
-    result_amr=AMR(var_list,var_value_list,link_list,const_attr_list)
+    result_amr=AMR(var_list,var_value_list,link_list,const_attr_list,path_dict)
     return result_amr

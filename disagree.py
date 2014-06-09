@@ -128,7 +128,7 @@ def xlang_main(args):
     json_fh = codecs.open(args.json, 'w', encoding='utf8')
 
   amrs_same_sent = []
-  aligner = Amr2AmrAligner(num_best=int(args.num_align_read), num_best_in_file=int(args.num_aligned_in_file), src2tgt_fh=src2tgt_fh, tgt2src_fh=tgt2src_fh, tgt_align_fh=tgt_align_fh)
+  aligner = Amr2AmrAligner(num_best=int(args.num_align_read), num_best_in_file=int(args.num_aligned_in_file), src2tgt_fh=src2tgt_fh, tgt2src_fh=tgt2src_fh)
   while True:
     (src_amr_line, src_comments) = amr_metadata.get_amr_line(src_amr_fh)
     if src_amr_line == "":
