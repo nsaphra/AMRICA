@@ -121,7 +121,6 @@ def xlang_main(args):
   tgt_amr_fh = codecs.open(args.tgt_amr, encoding='utf8')
   src2tgt_fh = codecs.open(args.align_src2tgt, encoding='utf8')
   tgt2src_fh = codecs.open(args.align_tgt2src, encoding='utf8')
-  tgt_align_fh = codecs.open(args.align_tgtamr2snt, encoding='utf8')
 
   json_fh = None
   if args.json:
@@ -194,8 +193,6 @@ if __name__ == '__main__':
     help='In bitext mode, GIZA alignment .NBEST file (see GIZA++ -nbestalignments opt) with source as vcb1.')
   parser.add_argument('--align_tgt2src',
     help='In bitext mode, GIZA alignment .NBEST file (see GIZA++ -nbestalignments opt) with target as vcb1.')
-  parser.add_argument('--align_tgtamr2snt',
-    help='In bitext mode, file aligning target AMR to sentence tokens.')
   parser.add_argument('--num_align_read',
     help='N to read from GIZA NBEST file.')
   parser.add_argument('--num_aligned_in_file',
