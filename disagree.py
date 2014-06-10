@@ -183,6 +183,7 @@ if __name__ == '__main__':
   parser.add_argument('-i', '--infile', help='amr input file')
   parser.add_argument('-o', '--outdir', help='image output directory')
   parser.add_argument('-v', '--verbose', action='store_true')
+  parser.add_argument('--no-verbose', action='store_true')
   parser.add_argument('-b', '--bitext', action='store_true',
     help='Input source and target language bitext AMRs.')
   parser.add_argument('-s', '--src_amr',
@@ -201,6 +202,8 @@ if __name__ == '__main__':
     help='File to dump json graphs to.')
   # TODO make interactive option and option to process a specific range
   args = parser.parse_args(remaining_argv)
+  if args.no_verbose:
+    args.verbose = False
 
   if (args.bitext):
     xlang_main(args)
