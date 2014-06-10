@@ -100,7 +100,8 @@ class AMR(object):
       self.__str__()
 
   @staticmethod
-  def parse_AMR_line(line):
+  def parse_AMR_line(line, xlang=False):
+    # set xlang True if you want consts represented as variable nodes with instance labels
     state=-1 #significant symbol just encountered: 1 for (, 2 for :, 3 for /
     stack=[] #variable stack
     cur_charseq=[] #current processing char sequence
@@ -263,7 +264,14 @@ class AMR(object):
     #keep original variable name.
     var_value_list=[]
     link_list=[]
-    const_attr_list=[]
+    const_attr_list=[] # for monolingual mode
+
+    # xlang mode variables
+    const_cnt = 0
+    const_var_list = []
+    const_var_value_list = []
+    const_link_list = []
+
     for v in var_list:
       if v not in var_dict:
          print >> sys.stderr, "Error: variable value not found", v
@@ -277,15 +285,33 @@ class AMR(object):
            link_dict[v1[1]]=v1[0]
       if v in var_attr_dict2:
          for v2 in var_attr_dict2[v]:
-           if v2[1][0]=="\"" and v2[1][-1]=="\"":
-              const_dict[v2[0]]=v2[1][1:-1]
-           elif v2[1] in var_dict:
+            const_lbl = v2[1]
+            if v2[1][0]=="\"" and v2[1][-1]=="\"":
+              const_lbl = v2[1][1:-1]
+            elif v2[1] in var_dict:
               link_dict[v2[1]]=v2[0]
               path_dict = remove_from_paths(path_lookup[(v, v2[0], v2[1])])
-           else:
-              const_dict[v2[0]]=v2[1]
+              continue
+
+            if xlang:
+              const_var = '_CONST_%d' % const_cnt
+              const_cnt += 1
+              var_dict[const_var] = const_lbl
+              const_var_list.append(const_var)
+              const_var_value_list.append(const_lbl)
+              const_link_list.append({})
+              link_dict[const_var] = v2[0]
+            else:
+              const_dict[v2[0]] = const_lbl
+
       link_list.append(link_dict)
-      const_attr_list.append(const_dict)
+      if not xlang:
+        const_attr_list.append(const_dict)
       link_list[0][var_list[0]]="TOP"
+    if xlang:
+      var_list += const_var_list
+      var_value_list += const_var_value_list
+      link_list += const_link_list
+      const_attr_list=[{} for v in var_list]
     result_amr=AMR(var_list,var_value_list,link_list,const_attr_list,path_dict)
     return result_amr

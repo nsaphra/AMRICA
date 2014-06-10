@@ -25,14 +25,14 @@ class AmrMeta(AMR):
     self.metadata = metadata
 
   @classmethod
-  def from_parse(cls, annotation_line, comment_lines):
+  def from_parse(cls, annotation_line, comment_lines, xlang=False):
     metadata = {}
     for l in comment_lines:
       matches = re.findall(r'::(\S+)\s(([^:]|:(?!:))+)', l)
       for m in matches:
         metadata[m[0]] = m[1].strip()
 
-    base_amr = AMR.parse_AMR_line(annotation_line)
+    base_amr = AMR.parse_AMR_line(annotation_line, xlang=xlang)
     return cls(base_amr=base_amr, metadata=metadata)
 
 

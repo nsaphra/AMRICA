@@ -134,8 +134,8 @@ def xlang_main(args):
     if src_amr_line == "":
       break
     (tgt_amr_line, tgt_comments) = amr_metadata.get_amr_line(tgt_amr_fh)
-    src_amr = amr_metadata.AmrMeta.from_parse(src_amr_line, src_comments)
-    tgt_amr = amr_metadata.AmrMeta.from_parse(tgt_amr_line, tgt_comments)
+    src_amr = amr_metadata.AmrMeta.from_parse(src_amr_line, src_comments, xlang=True)
+    tgt_amr = amr_metadata.AmrMeta.from_parse(tgt_amr_line, tgt_comments, xlang=True)
     assert src_amr.metadata['id'] == tgt_amr.metadata['id']
     cur_id = src_amr.metadata['id']
 
