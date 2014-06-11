@@ -9,11 +9,16 @@ AMR input file expected in format where comments above each annotation indicate
 the sentence like so:
 
 # ::id DF-170-181103-888_2097.1 ::date 2013-09-16T07:15:31 ::annotator ANON-01 ::preferred
-# ::tok This is a sentence.
+# ::tok This is a sentence .
+(this / file
+  :is (an / AMR))
 
 For monolingual disagreement, all annotations of some sentence should occur
 consecutively in the monolingual annotation file. For bilingual, annotations
-should be in the same order of sentences between the files.
+should be in the same order of sentences between the two files.
+
+For bilingual disagreement, you can include a ::alignments field from jamr to help with
+AMR-sentence alignment.
 """
 
 import argparse
