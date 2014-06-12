@@ -64,7 +64,7 @@ def hilight_disagreement(test_amrs, gold_amr, aligner=default_aligner):
     disagreement = SmatchGraph(test_inst, test_rel1, test_rel2, \
       gold_inst_t, gold_rel1_t, gold_rel2_t, \
       best_match, const_map_fn=aligner.const_map_fn, prebuilt_tables=True)
-    amr_graphs.append(disagreement.smatch2graph(weight_fn=aligner.weight_fn))
+    amr_graphs.append((disagreement.smatch2graph(weight_fn=aligner.weight_fn), best_match_num))
   return amr_graphs
 
 
@@ -97,18 +97,21 @@ def monolingual_main(args):
       gold_anno = gold_amr.metadata['annotator']
       sent = gold_amr.metadata['tok']
 
-      for (a, g) in zip(test_amrs, amr_graphs):
+      if (args.verbose):
+        print("ID: %s\n Sentence: %s\n gold anno: %s" % (cur_id, sent, gold_anno))
+      #raw_input("Press enter to continue: ")
+
+      for (a, (g, score)) in zip(test_amrs, amr_graphs):
         test_anno = a.metadata['annotator']
         if json_fh:
           json_fh.write(json_graph.dumps(g) + '\n')
+        if (args.verbose):
+          print("  annotator %s score: %d" % (test_anno, score))
 
         ag = nx.to_agraph(g)
         ag.layout(prog='dot')
         ag.draw('%s/%s_annoted_%s_%s.png' % (args.outdir, cur_id, gold_anno, test_anno))
 
-      if (args.verbose):
-        print("ID: %s\n Sentence: %s" % (cur_id, sent))
-      #raw_input("Press enter to continue: ")
 
       amrs_same_sent = []
       cur_id = cur_amr.metadata['id']
@@ -149,13 +152,13 @@ def xlang_main(args):
     amr_graphs = hilight_disagreement([tgt_amr], src_amr, aligner=aligner)
     if json_fh:
           json_fh.write(json_graph.dumps(amr_graphs[0]) + '\n')
-    ag = nx.to_agraph(amr_graphs[0])
+    if (args.verbose):
+      print("ID: %s\n Sentence: %s\n Sentence: %s\n Score: %f" % (cur_id, src_sent, tgt_sent, amr_graphs[0][1]))
+    #raw_input("Press enter to continue: ")
+
+    ag = nx.to_agraph(amr_graphs[0][0])
     ag.layout(prog='dot')
     ag.draw('%s/%s.png' % (args.outdir, cur_id))
-
-    if (args.verbose):
-      print("ID: %s\n Sentence: %s\n Sentence: %s" % (cur_id, src_sent, tgt_sent))
-    #raw_input("Press enter to continue: ")
 
   src_amr_fh.close()  
   tgt_amr_fh.close()
