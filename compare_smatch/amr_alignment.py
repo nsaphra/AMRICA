@@ -146,7 +146,7 @@ def parse_jamr_alignment(chunk):
   node_list = nodes_str.split('+')
   return (int(start_tok), int(end_tok), node_list)
 
-def align_label2toks_en(label, sent, weights, start_tok=0, end_tok=-1, default_full=False):
+def align_label2toks_en(label, sent, weights, toks_to_align):
   """
   label: node label to map
   sent: token list to map label to
@@ -155,8 +155,6 @@ def align_label2toks_en(label, sent, weights, start_tok=0, end_tok=-1, default_f
   return list mapping token index to match weight
   """
   # TODO frumious hack. should set up actual stemmer sometime.
-  if end_tok < 0:
-    end_tok = len(sent)
 
   lbl = label.lower()
   stem = lbl
@@ -173,12 +171,9 @@ def align_label2toks_en(label, sent, weights, start_tok=0, end_tok=-1, default_f
     return tok == lbl or \
       (len(tok) >= len(stem) and tok[:len(stem)] == stem)
 
-  matches = [t_ind+start_tok for (t_ind, t) in enumerate(sent[start_tok:end_tok]) if is_match(t.lower())]
+  matches = [t_ind for t_ind in toks_to_align if is_match(sent[t_ind].lower())]
   if len(matches) == 0:
-    if default_full:
-      matches = range(start_tok, end_tok)
-    else:
-      return weights
+    matches = toks_to_align
   for t_ind in matches:
     weights[t_ind] += 1.0 / len(matches)
   return weights
@@ -192,19 +187,23 @@ def align_amr2sent_jamr(amr, sent, jamr_line):
   """
   labels = get_all_labels(amr)
   labels_remain = {label:labels.count(label) for label in labels}
+  tokens_remain = set(range(len(sent)))
   align = {l:[0.0 for tok in sent] for l in labels}
 
   for chunk in jamr_line:
     (start_tok, end_tok, node_list) = parse_jamr_alignment(chunk)
     for node_path in node_list:
       label = amr.path_dict[node_path]
-      align[label] = align_label2toks_en(label, sent, align[label], start_tok=start_tok, end_tok=end_tok, default_full=True)
+      toks_to_align = range(start_tok, end_tok)
+      align[label] = align_label2toks_en(label, sent, align[label], toks_to_align)
       labels_remain[label] -= 1
+      for t in toks_to_align:
+        tokens_remain.discard(t)
 
   #TODO should really switch from a label-token-label alignment model to node-token-node
   for label in labels_remain:
     if labels_remain[label] > 0:
-      align[label] = align_label2toks_en(label, sent, align[label])
+      align[label] = align_label2toks_en(label, sent, align[label], tokens_remain)
   for label in align:
     z = sum(align[label])
     if z == 0:

@@ -15,7 +15,7 @@ import amr
 # import argparse #argparse only works for python 2.7. If you are using
 # older versin of Python, you can use optparse instead.
 
-iter_num = 5  # global variable, total number of iteration
+iter_num = 5 # global variable, total number of iteration
 
 verbose = False  # global variable, verbose output control
 
