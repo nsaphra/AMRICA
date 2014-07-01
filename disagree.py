@@ -38,7 +38,7 @@ from compare_smatch import amr_metadata
 from compare_smatch import smatch_graph
 from compare_smatch.smatch_graph import SmatchGraph
 
-def hilight_disagreement(test_amrs, gold_amr, aligner=default_aligner):
+def hilight_disagreement(test_amrs, gold_amr, iter_num, aligner=default_aligner):
   """
   Input:
     gold_amr: gold AMR object
@@ -59,7 +59,9 @@ def hilight_disagreement(test_amrs, gold_amr, aligner=default_aligner):
     (test_inst, test_rel1, test_rel2) = a.get_triples2()
     (best_match, best_match_num) = smatch.get_fh(test_inst, test_rel1, test_rel2,
       gold_inst, gold_rel1, gold_rel2,
-      test_label, gold_label, const_weight_fn=aligner.weight_fn, instance_weight_fn=aligner.weight_fn)
+      test_label, gold_label,
+      const_weight_fn=aligner.weight_fn, instance_weight_fn=aligner.weight_fn,
+      iter_num=iter_num)
 
     disagreement = SmatchGraph(test_inst, test_rel1, test_rel2, \
       gold_inst_t, gold_rel1_t, gold_rel2_t, \
@@ -92,7 +94,7 @@ def monolingual_main(args):
       test_amrs = amrs_same_sent[1:]
       if len(test_amrs) == 0:
         test_amrs = [gold_amr] # single AMR view case
-      amr_graphs = hilight_disagreement(test_amrs, gold_amr)
+      amr_graphs = hilight_disagreement(test_amrs, gold_amr, args.num_restarts)
 
       gold_anno = gold_amr.metadata['annotator']
       sent = gold_amr.metadata['tok']
@@ -149,7 +151,7 @@ def xlang_main(args):
     src_sent = src_amr.metadata['tok']
     tgt_sent = tgt_amr.metadata['tok']
 
-    amr_graphs = hilight_disagreement([tgt_amr], src_amr, aligner=aligner)
+    amr_graphs = hilight_disagreement([tgt_amr], src_amr, args.num_restarts, aligner=aligner)
     if json_fh:
           json_fh.write(json_graph.dumps(amr_graphs[0]) + '\n')
     if (args.verbose):
@@ -194,6 +196,8 @@ if __name__ == '__main__':
     help='N printed to GIZA NBEST file.')
   parser.add_argument('-j', '--json',
     help='File to dump json graphs to.')
+  parser.add_argument('--num_restarts', type=int, default=5,
+    help='Number of random restarts to execute during hill-climbing algorithm.')
   # TODO make interactive option and option to process a specific range
 
   if args.conf_file:

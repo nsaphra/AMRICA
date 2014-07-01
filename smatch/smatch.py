@@ -15,8 +15,6 @@ import amr
 # import argparse #argparse only works for python 2.7. If you are using
 # older versin of Python, you can use optparse instead.
 
-iter_num = 5 # global variable, total number of iteration
-
 verbose = False  # global variable, verbose output control
 
 single_score = True  # global variable, single score output control
@@ -132,17 +130,10 @@ def dflt_label_weighter(test_label, gold_label):
     return 0.0
 
 
-def compute_pool(
-    test_instance,
-    test_relation1,
-    test_relation2,
-    gold_instance,
-    gold_relation1,
-    gold_relation2,
-    test_label,
-    gold_label,
-    const_weight_fn,
-        instance_weight_fn):
+def compute_pool(test_instance, test_relation1, test_relation2,
+    gold_instance, gold_relation1, gold_relation2,
+    test_label, gold_label,
+    const_weight_fn, instance_weight_fn):
   """
   compute the possible variable matching candidate (the match which may result in 1)
   Args:
@@ -541,17 +532,11 @@ def get_best_gain(
   return (largest_match_num, cur_match)
 
 
-def get_fh(
-    test_instance,
-    test_relation1,
-    test_relation2,
-    gold_instance,
-    gold_relation1,
-    gold_relation2,
-    test_label,
-    gold_label,
-    const_weight_fn=dflt_label_weighter,
-        instance_weight_fn=dflt_label_weighter):
+def get_fh(test_instance, test_relation1, test_relation2,
+    gold_instance, gold_relation1, gold_relation2,
+    test_label, gold_label,
+    const_weight_fn=dflt_label_weighter, instance_weight_fn=dflt_label_weighter,
+    iter_num=5):
   """Get the f-score given two sets of triples
      Args:
          iter_num: iteration number of heuristic search
@@ -569,16 +554,10 @@ def get_fh(
         """
   # compute candidate pool
   (candidate_match,
-   weight_dict) = compute_pool(test_instance,
-                               test_relation1,
-                               test_relation2,
-                               gold_instance,
-                               gold_relation1,
-                               gold_relation2,
-                               test_label,
-                               gold_label,
-                               const_weight_fn,
-                               instance_weight_fn)
+   weight_dict) = compute_pool(test_instance, test_relation1, test_relation2,
+                               gold_instance, gold_relation1, gold_relation2,
+                               test_label, gold_label,
+                               const_weight_fn, instance_weight_fn)
   best_match_num = 0
   best_match = [-1] * len(test_instance)
   for i in range(0, iter_num):
