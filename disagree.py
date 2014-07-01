@@ -174,8 +174,6 @@ if __name__ == '__main__':
   parser = argparse.ArgumentParser()
   parser.add_argument("-c", "--conf_file",
     help="Specify config file", metavar="FILE")
-  args, remaining_argv = parser.parse_known_args()
-
   parser.add_argument('-i', '--infile', help='amr input file')
   parser.add_argument('-o', '--outdir', help='image output directory')
   parser.add_argument('-v', '--verbose', action='store_true')
@@ -200,10 +198,11 @@ if __name__ == '__main__':
     help='Number of random restarts to execute during hill-climbing algorithm.')
   # TODO make interactive option and option to process a specific range
 
-  if args.conf_file:
+  args_conf = parser.parse_args(['conf_file'])
+  if args_conf.conf_file:
     argparse_config.read_config_file(parser, args.conf_file)
 
-  args = parser.parse_args(remaining_argv)
+  args = parser.parse_args()
   if args.no_verbose:
     args.verbose = False
   if not args.num_align_read:
