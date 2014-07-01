@@ -207,6 +207,9 @@ if __name__ == '__main__':
   if not args.num_align_read:
     args.num_align_read = args.num_aligned_in_file
 
+  if not os.path.exists(args.outdir):
+    os.makedirs(args.outdir)
+
   if (args.bitext):
     xlang_main(args)
   else:
