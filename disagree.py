@@ -25,13 +25,13 @@ import argparse
 import argparse_config
 import networkx as nx
 from networkx.readwrite import json_graph
+import os
 from compare_smatch.amr_alignment import Amr2AmrAligner
 from compare_smatch.amr_alignment import default_aligner
 from smatch import smatch
 from collections import defaultdict
 import pygraphviz as pgz
 import copy
-import ConfigParser
 from pynlpl.formats.giza import GizaSentenceAlignment
 import codecs
 from compare_smatch import amr_metadata
@@ -172,8 +172,7 @@ def xlang_main(args):
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
-  parser.add_argument("-c", "--conf_file",
-    help="Specify config file", metavar="FILE")
+  parser.add_argument("-c", "--conf_file", help="Specify config file")
   parser.add_argument('-i', '--infile', help='amr input file')
   parser.add_argument('-o', '--outdir', help='image output directory')
   parser.add_argument('-v', '--verbose', action='store_true')
@@ -198,9 +197,9 @@ if __name__ == '__main__':
     help='Number of random restarts to execute during hill-climbing algorithm.')
   # TODO make interactive option and option to process a specific range
 
-  args_conf = parser.parse_args(['conf_file'])
+  args_conf = parser.parse_args()
   if args_conf.conf_file:
-    argparse_config.read_config_file(parser, args.conf_file)
+    argparse_config.read_config_file(parser, args_conf.conf_file)
 
   args = parser.parse_args()
   if args.no_verbose:
