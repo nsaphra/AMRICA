@@ -22,6 +22,7 @@ AMR-sentence alignment.
 """
 
 import argparse
+import argparse_config
 import networkx as nx
 from networkx.readwrite import json_graph
 from compare_smatch.amr_alignment import Amr2AmrAligner
@@ -36,7 +37,6 @@ import codecs
 from compare_smatch import amr_metadata
 from compare_smatch import smatch_graph
 from compare_smatch.smatch_graph import SmatchGraph
-# TODO better config/args system
 
 def hilight_disagreement(test_amrs, gold_amr, aligner=default_aligner):
   """
@@ -160,7 +160,7 @@ def xlang_main(args):
     ag.layout(prog='dot')
     ag.draw('%s/%s.png' % (args.outdir, cur_id))
 
-  src_amr_fh.close()  
+  src_amr_fh.close()
   tgt_amr_fh.close()
   src2tgt_fh.close()
   tgt2src_fh.close()
@@ -169,25 +169,11 @@ def xlang_main(args):
 
 
 if __name__ == '__main__':
-  conf_parser = argparse.ArgumentParser(add_help=False)
-  conf_parser.add_argument("-c", "--conf_file",
+  parser = argparse.ArgumentParser()
+  parser.add_argument("-c", "--conf_file",
     help="Specify config file", metavar="FILE")
-  args, remaining_argv = conf_parser.parse_known_args()
-  defaults = {}
-  if args.conf_file:
-    config = ConfigParser.SafeConfigParser()
-    config.read([args.conf_file])
-    defaults = dict(config.items("Defaults"))
+  args, remaining_argv = parser.parse_known_args()
 
-  parser = argparse.ArgumentParser(
-    parents=[conf_parser],
-    description='Generate graphviz png files for '
-    'easy inspection of AMR data for inter-annotator disagreement.\n'
-    'Usage: ./disagree.py -i all_amrs.txt -o png_dir/\n'
-    '(Or specify config file with -c)',
-    formatter_class=argparse.RawDescriptionHelpFormatter,
-  )
-  parser.set_defaults(**defaults)
   parser.add_argument('-i', '--infile', help='amr input file')
   parser.add_argument('-o', '--outdir', help='image output directory')
   parser.add_argument('-v', '--verbose', action='store_true')
@@ -209,6 +195,10 @@ if __name__ == '__main__':
   parser.add_argument('-j', '--json',
     help='File to dump json graphs to.')
   # TODO make interactive option and option to process a specific range
+
+  if args.conf_file:
+    argparse_config.read_config_file(parser, args.conf_file)
+
   args = parser.parse_args(remaining_argv)
   if args.no_verbose:
     args.verbose = False
