@@ -187,7 +187,7 @@ if __name__ == '__main__':
     help='In bitext mode, GIZA alignment .NBEST file (see GIZA++ -nbestalignments opt) with source as vcb1.')
   parser.add_argument('--align_tgt2src',
     help='In bitext mode, GIZA alignment .NBEST file (see GIZA++ -nbestalignments opt) with target as vcb1.')
-  parser.add_argument('--num_align_read', type=int, default=0,
+  parser.add_argument('--num_align_read', type=int,
     help='N to read from GIZA NBEST file.')
   parser.add_argument('--num_aligned_in_file', type=int, default=1,
     help='N printed to GIZA NBEST file.')
