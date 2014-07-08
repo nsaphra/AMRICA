@@ -236,12 +236,13 @@ def init_match(candidate_match, test_instance, gold_instance, weight_fn):
   random.seed()
   matched_dict = {}
 
+  num_test_matched = 0
   matches_by_weight = []
   result = [-1 for c in candidate_match]
   for i, c in enumerate(candidate_match):
     c2 = list(c)
     if len(c2) == 0:
-      result.append(-1)
+      num_test_matched += 1
       continue
     # word in the test instance
     test_word = test_instance[i][2]
@@ -252,12 +253,14 @@ def init_match(candidate_match, test_instance, gold_instance, weight_fn):
 
   matches_by_weight = sorted(matches_by_weight, key = lambda (x1,x2,x3) : x3)
   for (gold, test, score) in matches_by_weight:
-    if len(matched_dict) == len(gold_instance):
+    if len(matched_dict) == len(gold_instance) \
+        or num_test_matched == len(test_instance):
       break
     if result[test] != -1 or gold in matched_dict:
       continue
     result[test] = gold
     matched_dict[gold] = 1
+    num_test_matched += 1
 
   for (i, m) in enumerate(result):
     if m != -1:
