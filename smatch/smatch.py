@@ -235,8 +235,9 @@ def init_match(candidate_match, test_instance, gold_instance, weight_fn):
          intialized match result"""
   random.seed()
   matched_dict = {}
-  result = []
-  no_word_match = []
+
+  matches_by_weight = []
+  result = [-1 for c in candidate_match]
   for i, c in enumerate(candidate_match):
     c2 = list(c)
     if len(c2) == 0:
@@ -244,50 +245,38 @@ def init_match(candidate_match, test_instance, gold_instance, weight_fn):
       continue
     # word in the test instance
     test_word = test_instance[i][2]
-    max_score = 0.0
-    max_match = -1
     for j, m_id in enumerate(c2):
       gold_word = gold_instance[int(m_id)][2]
       curr_score = weight_fn(gold_word, test_word)
-      if curr_score > max_score:
-        if int(m_id) not in matched_dict:
-          max_score = curr_score
-          max_match = int(m_id)
-    if max_score > 0:
-      result.append(max_match)
-      matched_dict[max_match] = 1
-      #   found=True
-    if len(result) == i:
-      no_word_match.append(i)
-      result.append(-1)
-  for i in no_word_match:
+      matches_by_weight.append((int(m_id), i, curr_score))
+
+  matches_by_weight = sorted(matches_by_weight, key = lambda (x1,x2,x3) : x3)
+  for (gold, test, score) in matches_by_weight:
+    if len(matched_dict) == len(gold_instance):
+      break
+    if result[test] != -1 or gold in matched_dict:
+      continue
+    result[test] = gold
+    matched_dict[gold] = 1
+
+  for (i, m) in enumerate(result):
+    if m != -1:
+      continue
     c2 = list(candidate_match[i])
     found = False
     while len(c2) != 1:
       rid = random.randint(0, len(c2) - 1)
       if c2[rid] in matched_dict:
         c2.pop(rid)
-#        cur_rid=0
-#        while cur_rid<len(c2):
-# rid=random.randint(0,len(c2)-1)
-#          if c2[cur_rid] in matched_dict:
-#             cur_rid+=1
-#             continue
       else:
         matched_dict[c2[rid]] = 1
         result[i] = c2[rid]
-    #     matched_dict[c2[cur_rid]]=1
-    #     result[i]=c2[cur_rid]
         found = True
         break
     if not found:
       if c2[0] not in matched_dict:
         result[i] = c2[0]
         matched_dict[c2[0]] = 1
-    # result[i]=-1
-  #       if c2[0] not in matched_dict:
-  #          result[i]=c2[0]
-  #          matched_dict[c2[0]]=1
   return result
 
 
