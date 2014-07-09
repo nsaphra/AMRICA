@@ -553,6 +553,16 @@ def get_fh(test_instance, test_relation1, test_relation2,
                                node_weight_fn, edge_weight_fn)
   best_match_num = 0
   best_match = [-1] * len(test_instance)
+
+  # best lexical match
+  if iter_num == 0:
+    start_match = init_match(
+        candidate_match,
+        test_instance,
+        gold_instance,
+        node_weight_fn)
+    return(start_match, compute_match(start_match, weight_dict))
+
   for i in range(0, iter_num):
     if verbose:
       print >> sys.stderr, "Iteration", i
