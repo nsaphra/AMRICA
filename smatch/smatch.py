@@ -252,7 +252,7 @@ def init_match(candidate_match, test_instance, gold_instance, node_weight_fn):
       curr_score = node_weight_fn(gold_word, test_word)
       matches_by_weight.append((int(m_id), i, curr_score))
 
-  matches_by_weight = sorted(matches_by_weight, key = lambda (x1,x2,x3) : x3)
+  matches_by_weight = sorted(matches_by_weight, key=lambda (x1,x2,x3) : x3, reverse=True)
   for (gold, test, score) in matches_by_weight:
     if len(matched_dict) == len(gold_instance) \
         or num_test_matched == len(test_instance):
