@@ -40,7 +40,7 @@ class SmatchGraph:
     else:
       (self.gold_inst_t, self.gold_rel1_t, self.gold_rel2_t) = \
         amr2dict(gold_inst, gold_rel1, gold_rel2)
-    self.match = match
+    self.match = match # test var index -> gold var index
     self.map_fn = const_map_fn
 
     (self.unmatched_inst, self.unmatched_rel1, self.unmatched_rel2) = \

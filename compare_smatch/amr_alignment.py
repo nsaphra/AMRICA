@@ -71,9 +71,9 @@ class Amr2AmrAligner(object):
     """ Get all const strings from source amr that could map to target const """
     const_matches = [const]
     for (t,s) in filter(lambda (t,s): t == const, self.amr2amr):
-      if self.weight_fn(t,s) > 0: # weight > 0
+      if self.node_weight_fn(t,s) > 0: # weight > 0
         const_matches.append(s)
-    return sorted(const_matches, key=lambda x: self.weight_fn(const, x))
+    return sorted(const_matches, key=lambda x: self.node_weight_fn(const, x), reverse=True)
 
   @staticmethod
   def dflt_node_weight_fn(tgt_label, src_label):
