@@ -133,7 +133,7 @@ def dflt_label_weighter(test_label, gold_label):
 def compute_pool(test_instance, test_relation1, test_relation2,
     gold_instance, gold_relation1, gold_relation2,
     test_label, gold_label,
-    const_weight_fn, instance_weight_fn):
+    node_weight_fn, edge_weight_fn):
   """
   compute the possible variable matching candidate (the match which may result in 1)
   Args:
@@ -161,7 +161,7 @@ def compute_pool(test_instance, test_relation1, test_relation2,
   for i in range(0, len_test_inst):
     for j in range(0, len_gold_inst):
       if test_instance[i][0].lower() == gold_instance[j][0].lower():
-        w = instance_weight_fn(test_instance[i][2], gold_instance[j][2])
+        w = node_weight_fn(test_instance[i][2], gold_instance[j][2])
         var1_num = int(test_instance[i][1][len(test_label):])
         var2_num = int(gold_instance[j][1][len(gold_label):])
         candidate_match[var1_num].add(var2_num)
@@ -174,7 +174,7 @@ def compute_pool(test_instance, test_relation1, test_relation2,
   for i in range(0, len_test_rel1):
     for j in range(0, len_gold_rel1):
       if test_relation1[i][0].lower() == gold_relation1[j][0].lower():
-        w = const_weight_fn(test_relation1[i][2], gold_relation1[j][2])
+        w = node_weight_fn(test_relation1[i][2], gold_relation1[j][2])
         var1_num = int(test_relation1[i][1][len(test_label):])
         var2_num = int(gold_relation1[j][1][len(gold_label):])
         candidate_match[var1_num].add(var2_num)
@@ -187,7 +187,8 @@ def compute_pool(test_instance, test_relation1, test_relation2,
 
   for i in range(0, len_test_rel2):
     for j in range(0, len_gold_rel2):
-      if test_relation2[i][0].lower() == gold_relation2[j][0].lower():
+      w = edge_weight_fn(test_relation2[i][0], gold_relation2[j][0])
+      if w > 0:
         var1_num_test = int(test_relation2[i][1][len(test_label):])
         var1_num_gold = int(gold_relation2[j][1][len(gold_label):])
         var2_num_test = int(test_relation2[i][2][len(test_label):])
@@ -199,33 +200,33 @@ def compute_pool(test_instance, test_relation1, test_relation2,
         if cur_k2 != cur_k1:
           if cur_k1 in weight_dict:
             if cur_k2 in weight_dict[cur_k1]:
-              weight_dict[cur_k1][cur_k2] += 1
+              weight_dict[cur_k1][cur_k2] += w
             else:
-              weight_dict[cur_k1][cur_k2] = 1
+              weight_dict[cur_k1][cur_k2] = w
           else:
             weight_dict[cur_k1] = {}
             weight_dict[cur_k1][-1] = 0
-            weight_dict[cur_k1][cur_k2] = 1
+            weight_dict[cur_k1][cur_k2] = w
           if cur_k2 in weight_dict:
             if cur_k1 in weight_dict[cur_k2]:
-              weight_dict[cur_k2][cur_k1] += 1
+              weight_dict[cur_k2][cur_k1] += w
             else:
-              weight_dict[cur_k2][cur_k1] = 1
+              weight_dict[cur_k2][cur_k1] = w
           else:
             weight_dict[cur_k2] = {}
             weight_dict[cur_k2][-1] = 0
-            weight_dict[cur_k2][cur_k1] = 1
+            weight_dict[cur_k2][cur_k1] = w
         else:
           # cycle
           if cur_k1 in weight_dict:
-            weight_dict[cur_k1][-1] += 1
+            weight_dict[cur_k1][-1] += w
           else:
             weight_dict[cur_k1] = {}
-            weight_dict[cur_k1][-1] = 1
+            weight_dict[cur_k1][-1] = w
   return (candidate_match, weight_dict)
 
 
-def init_match(candidate_match, test_instance, gold_instance, weight_fn):
+def init_match(candidate_match, test_instance, gold_instance, node_weight_fn):
   """Initialize match based on the word match
      Args:
          candidate_match: candidate variable match list
@@ -248,7 +249,7 @@ def init_match(candidate_match, test_instance, gold_instance, weight_fn):
     test_word = test_instance[i][2]
     for j, m_id in enumerate(c2):
       gold_word = gold_instance[int(m_id)][2]
-      curr_score = weight_fn(gold_word, test_word)
+      curr_score = node_weight_fn(gold_word, test_word)
       matches_by_weight.append((int(m_id), i, curr_score))
 
   matches_by_weight = sorted(matches_by_weight, key = lambda (x1,x2,x3) : x3)
@@ -527,7 +528,7 @@ def get_best_gain(
 def get_fh(test_instance, test_relation1, test_relation2,
     gold_instance, gold_relation1, gold_relation2,
     test_label, gold_label,
-    const_weight_fn=dflt_label_weighter, instance_weight_fn=dflt_label_weighter,
+    node_weight_fn=dflt_label_weighter, edge_weight_fn=dflt_label_weighter,
     iter_num=5):
   """Get the f-score given two sets of triples
      Args:
@@ -549,7 +550,7 @@ def get_fh(test_instance, test_relation1, test_relation2,
    weight_dict) = compute_pool(test_instance, test_relation1, test_relation2,
                                gold_instance, gold_relation1, gold_relation2,
                                test_label, gold_label,
-                               const_weight_fn, instance_weight_fn)
+                               node_weight_fn, edge_weight_fn)
   best_match_num = 0
   best_match = [-1] * len(test_instance)
   for i in range(0, iter_num):
@@ -561,7 +562,7 @@ def get_fh(test_instance, test_relation1, test_relation2,
           candidate_match,
           test_instance,
           gold_instance,
-          instance_weight_fn)
+          node_weight_fn)
     else:
       # random initialization
       start_match = get_random_sol(candidate_match)

@@ -18,10 +18,12 @@ class Amr2AmrAligner(object):
   def __init__(self, num_best=5, num_best_in_file=-1, src2tgt_fh=None, tgt2src_fh=None):
     if src2tgt_fh == None or tgt2src_fh == None:
       self.is_default = True
-      self.weight_fn = self.dflt_weight_fn
+      self.node_weight_fn = self.dflt_node_weight_fn
+      self.edge_weight_fn = self.dflt_edge_weight_fn
     else:
       self.is_default = False
-      self.weight_fn = None
+      self.node_weight_fn = None
+      self.edge_weight_fn = self.xlang_edge_weight_fn
     self.src2tgt_fh = src2tgt_fh
     self.tgt2src_fh = tgt2src_fh
     self.amr2amr = {}
@@ -63,7 +65,7 @@ class Amr2AmrAligner(object):
             if score > 0:
               self.amr2amr[(tgt_lbl, src_lbl)] += score
 
-    self.weight_fn = lambda t,s : self.amr2amr[(t, s)]
+    self.node_weight_fn = lambda t,s : self.amr2amr[(t, s)]
 
   def const_map_fn(self, const):
     """ Get all const strings from source amr that could map to target const """
@@ -74,8 +76,23 @@ class Amr2AmrAligner(object):
     return sorted(const_matches, key=lambda x: self.weight_fn(const, x))
 
   @staticmethod
-  def dflt_weight_fn(tgt_label, src_label):
+  def dflt_node_weight_fn(tgt_label, src_label):
     return 1.0 if tgt_label.lower() == src_label.lower() else 0.0
+
+  @staticmethod
+  def dflt_edge_weight_fn(tgt_label, src_label):
+    return 1.0 if tgt_label.lower() == src_label.lower() else 0.0
+
+  def xlang_edge_weight_fn(self, tgt_label, src_label):
+    tgt = tgt_label.lower()
+    src = src_label.lower()
+    if tgt == src:
+      # operand edges are all equivalent
+      #TODO make this an RE instead?
+      return 1.0
+    if tgt.startswith("op") and src.startswith("op"):
+      return 0.9 # frumious hack to favor similar op edges
+    return 0.0
 
   def get_nbest_alignments(self, fh):
     """ Read an entry from the giza alignment .A3 NBEST file. """

@@ -60,13 +60,15 @@ def hilight_disagreement(test_amrs, gold_amr, iter_num, aligner=default_aligner)
     (best_match, best_match_num) = smatch.get_fh(test_inst, test_rel1, test_rel2,
       gold_inst, gold_rel1, gold_rel2,
       test_label, gold_label,
-      const_weight_fn=aligner.weight_fn, instance_weight_fn=aligner.weight_fn,
+      node_weight_fn=aligner.node_weight_fn, edge_weight_fn=aligner.edge_weight_fn,
       iter_num=iter_num)
 
     disagreement = SmatchGraph(test_inst, test_rel1, test_rel2, \
       gold_inst_t, gold_rel1_t, gold_rel2_t, \
       best_match, const_map_fn=aligner.const_map_fn, prebuilt_tables=True)
-    amr_graphs.append((disagreement.smatch2graph(weight_fn=aligner.weight_fn), best_match_num))
+    amr_graphs.append((disagreement.smatch2graph(node_weight_fn=aligner.node_weight_fn,
+                                                 edge_weight_fn=aligner.edge_weight_fn),
+      best_match_num))
   return amr_graphs
 
 

@@ -48,7 +48,7 @@ class SmatchGraph:
     self.gold_ind = {} # test variable hash -> gold variable index
     self.G = nx.MultiDiGraph()
 
-  def smatch2graph(self, weight_fn=None):
+  def smatch2graph(self, node_weight_fn=None, edge_weight_fn=None):
     """
     Returns graph of test AMR / gold AMR union, with hilighted disagreements for
     different labels on edges and nodes, unmatched nodes and edges.
@@ -63,8 +63,8 @@ class SmatchGraph:
     for (reln, v1, v2) in self.rel2:
       self.add_rel2(reln, v1, v2)
 
-    if weight_fn:
-      self.unmatch_dead_nodes(weight_fn)
+    if node_weight_fn and edge_weight_fn:
+      self.unmatch_dead_nodes(node_weight_fn, edge_weight_fn)
 
     # Add gold standard elements not in test
     test_ind = {v:k for (k,v) in self.gold_ind.items()} # reverse lookup from gold ind
@@ -148,16 +148,17 @@ class SmatchGraph:
         self.unmatched_rel2[(self.gold_ind[v1], self.gold_ind[v2])].remove(reln)
     self.add_edge(v1, v2, reln, gold_lbl)
 
-  def unmatch_dead_nodes(self, weight_fn):
+  def unmatch_dead_nodes(self, node_weight_fn, edge_weight_fn):
     """ Unmap node mappings that don't increase smatch score. """
     node_is_live = {v:(gold == -1) for (v, gold) in self.gold_ind.items()}
     for (v, attr) in self.G.nodes(data=True):
-      if weight_fn(attr['test_label'], attr['gold_label']):
+      if node_weight_fn(attr['test_label'], attr['gold_label']) > 0:
         node_is_live[v] = True
     for (v1, links) in self.G.adjacency_iter():
       for (v2, edges) in links.items():
         for (ind, attr) in edges.items():
-          if attr['test_label'] == attr['gold_label']: #TODO is this sufficient condition?
+          if attr['test_label'] == attr['gold_label']:
+            #TODO handle other cases where edge match score > 0
             node_is_live[v2] = True
             node_is_live[v1] = True
 
