@@ -1721,6 +1721,25 @@ div#notebook {
 </ul>
 <p>In general, bilingual AMRICA appears to require more random restarts than monolingual AMRICA to perform well. This restart count can be modified with the flag <code>--num_restarts</code>.</p>
 <p><img src="wb.eng_0003.13.png"></p>
+<h5 id="comparison-smart-initialization-vs.-approximation">Comparison: Smart Initialization vs. Approximation</h5>
+<p>We can observe the degree to which using Smatch-like approximations (here, with 20 random initializations) improves accuracy over selecting likely matches from raw alignment data (smart initialization). For a pairing declared structurally compatible by <a href="http://www.lrec-conf.org/proceedings/lrec2014/pdf/384_Paper.pdf">(Xue 2014)</a>.</p>
+<ul>
+<li>After initialization:</li>
+</ul>
+<p><img src="wb.eng_0003.14_0.png"></p>
+<ul>
+<li>After bilingual smatch, with errors circled:</li>
+</ul>
+<p><img src="wb.eng_0003.14.png"></p>
+<p>For a pairing considered incompatible:</p>
+<ul>
+<li>After initialization:</li>
+</ul>
+<p><img src="wb.eng_0003.6_0.png"></p>
+<ul>
+<li>After bilingual smatch, with errors circled:</li>
+</ul>
+<p><img src="wb.eng_0003.6.png"></p>
 <h2 id="getting-started">Getting started</h2>
 <p>Download the python source from <a href="https://github.com/nsaphra/AMRICA">github</a>.</p>
 <h3 id="dependencies">Dependencies</h3>
@@ -1759,6 +1778,21 @@ verbose</code></pre>
 <p><code>--nbestalignments</code> is a tricky flag to use, because it will only generate on a final alignment run. I could only get it to work with the default GIZA++ settings, myself.</p>
 </div>
 </div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">
+In&nbsp;[]:
+</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class="highlight"><pre> 
+</pre></div>
+
+</div>
+</div>
+</div>
+
 </div>
     </div>
   </div>
