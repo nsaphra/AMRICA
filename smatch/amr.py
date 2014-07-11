@@ -19,9 +19,9 @@ class AMR(object):
           var_value_list=None,
           link_list=None,
           const_link_list=None,
-          path_dict=None):
+          path2label=None):
     """
-    path_dict: maps 0.1.0 to the label (inst or const) of the 0-indexed child
+    path2label: maps 0.1.0 to the label (inst or const) of the 0-indexed child
       of the 1-indexed child of the 0th node (head)
     """
     if var_list is None:
@@ -46,10 +46,10 @@ class AMR(object):
       self.const_links = []
     else:
       self.const_links = const_link_list[:]
-    if path_dict is None:
-      self.path_dict = {}
+    if path2label is None:
+      self.path2label = {}
     else:
-      self.path_dict = path_dict
+      self.path2label = path2label
 
   def add_node(node_value):
     self.nodes.append(node_value)
@@ -125,28 +125,30 @@ class AMR(object):
     attr_list = []  # each entry is an attr dict
     in_quote = False
     curr_path = ['0']
-    path_dict = {}
-    path_lookup = {}  # var, reln, const to path key
+    path2label = {}
+    path_lookup = {}  # (var, reln, const) to path key
 
     def remove_from_paths(path):
-      """ Adjust all paths in path_dict by removing the node at path """
+      """ Adjust all paths in path2label by removing the node at path
+          (and any descdendants) """
       node_ind = int(path[-1])
       depth = len(path) - 1
       prefix = '.'.join(path[:-1]) + '.'
-      # remove node from path_dict keys
-      new_path_dict = {}
-      for (k, v) in path_dict.items():
+      # remove node from path2label keys
+      new_path2label = {}
+      for (k, v) in path2label.items():
         if k.startswith(prefix):
           k_arr = k.split('.')
           curr_ind = int(k_arr[depth])
           if curr_ind == node_ind:
             continue  # deleting node
           elif curr_ind > node_ind:
+            # node index moves down by 1 since middle node removed
             k_arr[depth] = str(curr_ind - 1)
-            new_path_dict['.'.join(k_arr)] = v
+            new_path2label['.'.join(k_arr)] = v
             continue
-        new_path_dict[k] = v
-      return new_path_dict
+        new_path2label[k] = v
+      return new_path2label
 
       # remove node from path_lookup vals
       for (k, v) in path_lookup.items():
@@ -188,7 +190,7 @@ class AMR(object):
           cur_charseq[:] = []
           cur_var_name = stack[-1]
           var_dict[cur_var_name] = var_value
-          path_dict['.'.join(curr_path)] = var_value
+          path2label['.'.join(curr_path)] = var_value
           curr_path.append('0')
         elif state == 2:  # : ...:
           temp_attr_value = "".join(cur_charseq)
@@ -206,7 +208,7 @@ class AMR(object):
           # TODO should all labels in quotes be consts?
           if attr_value not in var_dict:
             var_attr_dict2[stack[-1]].append((attr_name, attr_value))
-            path_dict['.'.join(curr_path)] = attr_value
+            path2label['.'.join(curr_path)] = attr_value
             path_lookup[
                 (stack[-1], attr_name, attr_value)] = [i for i in curr_path]
             curr_path[-1] = str(int(curr_path[-1]) + 1)
@@ -261,7 +263,7 @@ class AMR(object):
             var_attr_dict2[stack[-1]].append((attr_name, attr_value))
           else:
             var_attr_dict1[stack[-1]].append((attr_name, attr_value))
-          path_dict['.'.join(curr_path)] = attr_value
+          path2label['.'.join(curr_path)] = attr_value
           path_lookup[
               (stack[-1], attr_name, attr_value)] = [i for i in curr_path]
           curr_path.pop()
@@ -270,7 +272,7 @@ class AMR(object):
           cur_charseq[:] = []
           cur_var_name = stack[-1]
           var_dict[cur_var_name] = var_value
-          path_dict['.'.join(curr_path)] = var_value
+          path2label['.'.join(curr_path)] = var_value
         else:
           curr_path.pop()
         stack.pop()
@@ -307,8 +309,9 @@ class AMR(object):
           if v2[1][0] == "\"" and v2[1][-1] == "\"":
             const_lbl = v2[1][1:-1]
           elif v2[1] in var_dict:
+            # not the first occurrence of this child var
             link_dict[v2[1]] = v2[0]
-            path_dict = remove_from_paths(path_lookup[(v, v2[0], v2[1])])
+            path2label = remove_from_paths(path_lookup[(v, v2[0], v2[1])])
             continue
 
           if xlang:
@@ -336,5 +339,5 @@ class AMR(object):
         var_value_list,
         link_list,
         const_attr_list,
-        path_dict)
+        path2label)
     return result_amr

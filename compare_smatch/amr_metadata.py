@@ -9,18 +9,18 @@ import re
 
 class AmrMeta(AMR):
   def __init__(self, var_list=None, var_value_list=None,
-               link_list=None, const_link_list=None, path_dict=None,
+               link_list=None, const_link_list=None, path2label=None,
                base_amr=None, metadata={}):
     if base_amr is None:
       super(AmrMeta, self).__init__(var_list, var_value_list, 
-                                    link_list, const_link_list, path_dict)
+                                    link_list, const_link_list, path2label)
     else:
       self.nodes = base_amr.nodes
       self.root = base_amr.root
       self.var_values = base_amr.var_values
       self.links = base_amr.links
       self.const_links = base_amr.const_links
-      self.path_dict = base_amr.path_dict
+      self.path2label = base_amr.path2label
 
     self.metadata = metadata
 

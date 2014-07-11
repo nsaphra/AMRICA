@@ -210,7 +210,7 @@ def align_amr2sent_jamr(amr, sent, jamr_line):
   for chunk in jamr_line:
     (start_tok, end_tok, node_list) = parse_jamr_alignment(chunk)
     for node_path in node_list:
-      label = amr.path_dict[node_path]
+      label = amr.path2label[node_path]
       toks_to_align = range(start_tok, end_tok)
       align[label] = align_label2toks_en(label, sent, align[label], toks_to_align)
       labels_remain[label] -= 1
