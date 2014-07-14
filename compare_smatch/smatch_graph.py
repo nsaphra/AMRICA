@@ -156,11 +156,15 @@ class SmatchGraph:
         node_is_live[v] = True
     for (v1, links) in self.G.adjacency_iter():
       for (v2, edges) in links.items():
+        if len(edges) > 1:
+          node_is_live[v2] = True
+          node_is_live[v1] = True
+          break
         for (ind, attr) in edges.items():
           if attr['test_label'] == attr['gold_label']:
-            #TODO handle other cases where edge match score > 0
             node_is_live[v2] = True
             node_is_live[v1] = True
+            break
 
     for v in node_is_live.keys():
       if not node_is_live[v]:
