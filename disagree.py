@@ -113,9 +113,9 @@ def monolingual_main(args):
           print("  annotator %s score: %d" % (test_anno, score))
 
         ag = nx.to_agraph(g)
+        ag.graph_attr['label'] = sent
         ag.layout(prog='dot')
         ag.draw('%s/%s_annoted_%s_%s.png' % (args.outdir, cur_id, gold_anno, test_anno))
-
 
       amrs_same_sent = []
       cur_id = cur_amr.metadata['id']
@@ -161,6 +161,7 @@ def xlang_main(args):
     #raw_input("Press enter to continue: ")
 
     ag = nx.to_agraph(amr_graphs[0][0])
+    ag.graph_attr['label'] = "%s\n%s" % (src_sent, tgt_sent)
     ag.layout(prog='dot')
     ag.draw('%s/%s.png' % (args.outdir, cur_id))
 
