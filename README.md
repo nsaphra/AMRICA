@@ -31,7 +31,7 @@ While Smatch tries to match every node in the smaller graph to some node in the 
 
 AMRICA then generates image files from graphviz graphs of the alignments. If a node or edge appears only in the gold data, it is red. If that node or edge appears only in the test data, it is blue. If the node or edge has a matching in our final alignment, it is black.
 
-![alignment](https://github.com/nsaphra/AMRICA/tree/master/demo/DF-183-195681-794_9333.5_annoted_UCO-AMR-06_UCO-AMR-05.png?raw=true)
+![](demo/DF-183-195681-794_9333.5_annoted_UCO-AMR-06_UCO-AMR-05.png?raw=true)
 
 #### Bitextual Variant
 
@@ -49,7 +49,7 @@ In AMRICA, instead of adding one point for each perfectly matching instance labe
 
 In general, bilingual AMRICA appears to require more random restarts than monolingual AMRICA to perform well. This restart count can be modified with the flag `--num_restarts`.
 
-![alignment](https://github.com/nsaphra/AMRICA/tree/master/demo/wb.eng_0003.13.png?raw=true)
+![](demo/wb.eng_0003.13.png?raw=true)
 
 ##### Comparison: Smart Initialization vs. Approximation
 
@@ -57,21 +57,21 @@ We can observe the degree to which using Smatch-like approximations (here, with 
 
 * After initialization:
 
-![alignment](https://github.com/nsaphra/AMRICA/tree/master/demo/wb.eng_0003.14_0.png?raw=true)
+![](demo/wb.eng_0003.14_0.png?raw=true)
 
 * After bilingual smatch, with errors circled:
 
-![alignment](https://github.com/nsaphra/AMRICA/tree/master/demo/wb.eng_0003.14.png?raw=true)
+![](demo/wb.eng_0003.14.png?raw=true)
 
 For a pairing considered incompatible:
 
 * After initialization:
 
-![alignment](https://github.com/nsaphra/AMRICA/tree/master/demo/wb.eng_0003.6_0.png?raw=true)
+![](demo/wb.eng_0003.6_0.png?raw=true)
 
 * After bilingual smatch, with errors circled:
 
-![alignment](https://github.com/nsaphra/AMRICA/tree/master/demo/wb.eng_0003.6.png?raw=true)
+![](demo/wb.eng_0003.6.png?raw=true)
 
 
 
