@@ -38,7 +38,7 @@ from compare_smatch import amr_metadata
 from compare_smatch import smatch_graph
 from compare_smatch.smatch_graph import SmatchGraph
 
-def hilight_disagreement(test_amrs, gold_amr, iter_num, aligner=default_aligner):
+def hilight_disagreement(test_amrs, gold_amr, iter_num, aligner=default_aligner, gold_aligned_fh=None):
   """
   Input:
     gold_amr: gold AMR object
@@ -58,13 +58,17 @@ def hilight_disagreement(test_amrs, gold_amr, iter_num, aligner=default_aligner)
     test_label=u'a'
     a.rename_node(test_label)
     (test_inst, test_rel1, test_rel2) = a.get_triples2()
-    (best_match, best_match_num) = smatch.get_fh(test_inst, test_rel1, test_rel2,
-      gold_inst, gold_rel1, gold_rel2,
-      test_label, gold_label,
-      node_weight_fn=aligner.node_weight_fn, edge_weight_fn=aligner.edge_weight_fn,
-      iter_num=iter_num)
+    if gold_aligned_fh:
+      gold_alignments = get_next_gold_alignment(gold_aligned_fh)
+      (best_match, best_match_num) = 
+    else:
+      (best_match, best_match_num) = smatch.get_fh(test_inst, test_rel1, test_rel2,
+        gold_inst, gold_rel1, gold_rel2,
+        test_label, gold_label,
+        node_weight_fn=aligner.node_weight_fn, edge_weight_fn=aligner.edge_weight_fn,
+        iter_num=iter_num)
 
-    disagreement = SmatchGraph(test_inst, test_rel1, test_rel2, gold_inst, \
+    disagreement = SmatchGraph(test_inst, test_rel1, test_rel2, \
       gold_inst_t, gold_rel1_t, gold_rel2_t, \
       best_match, const_map_fn=aligner.const_map_fn)
     amr_graphs.append((disagreement.smatch2graph(node_weight_fn=aligner.node_weight_fn,
@@ -89,8 +93,15 @@ def close_output_files(json_fh, align_fh):
   align_fh and align_fh.close()
 
 
+def get_next_gold_alignment(align_in_fh):
+  
+
+
 def monolingual_main(args):
   infile = codecs.open(args.infile, encoding='utf8')
+  gold_aligned_fh = None
+  if args.align_in:
+    gold_aligned_fh = codecs.open(args.align_in, encoding='utf8')
   (json_fh, align_fh) = open_output_files(args)
 
   amrs_same_sent = []
@@ -141,6 +152,7 @@ def monolingual_main(args):
     amrs_same_sent.append(cur_amr)
 
   infile.close()
+  gold_aligned_fh and gold_aligned_fh.close()
   close_output_files(json_fh, align_fh)
 
 
@@ -150,7 +162,9 @@ def xlang_main(args):
   tgt_amr_fh = codecs.open(args.tgt_amr, encoding='utf8')
   src2tgt_fh = codecs.open(args.align_src2tgt, encoding='utf8')
   tgt2src_fh = codecs.open(args.align_tgt2src, encoding='utf8')
-
+  gold_aligned_fh = None
+  if args.align_in:
+    gold_aligned_fh = codecs.open(args.align_in, encoding='utf8')
   (json_fh, align_fh) = open_output_files(args)
 
   amrs_same_sent = []
@@ -168,7 +182,7 @@ def xlang_main(args):
     src_sent = src_amr.metadata['tok']
     tgt_sent = tgt_amr.metadata['tok']
 
-    (amr_graphs, smatchgraphs) = hilight_disagreement([tgt_amr], src_amr, args.num_restarts, aligner=aligner)
+    (amr_graphs, smatchgraphs) = hilight_disagreement([tgt_amr], src_amr, args.num_restarts, aligner=aligner, gold_aligned_fh=gold_aligned_fh)
     if json_fh:
       json_fh.write(json_graph.dumps(amr_graphs[0]) + '\n')
     if align_fh:
@@ -186,6 +200,7 @@ def xlang_main(args):
   tgt_amr_fh.close()
   src2tgt_fh.close()
   tgt2src_fh.close()
+  gold_aligned_fh and gold_aligned_fh.close()
   close_output_files(json_fh, align_fh)
 
 
@@ -216,6 +231,8 @@ if __name__ == '__main__':
     help='Number of random restarts to execute during hill-climbing algorithm.')
   parser.add_argument('--align_out',
     help="Human-readable alignments output file")
+  parser.add_argument('--align_in',
+    help="Alignments from human-editable text file, as from align_out")
   # TODO make interactive option and option to process a specific range
 
   args_conf = parser.parse_args()
