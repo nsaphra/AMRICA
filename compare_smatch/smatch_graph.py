@@ -22,20 +22,18 @@ TEST_COLOR = 'red'
 DFLT_COLOR = 'black'
 
 class SmatchGraph:
-  def __init__(self, inst, rel1, rel2, gold_inst, \
+  def __init__(self, inst, rel1, rel2, \
     gold_inst_t, gold_rel1_t, gold_rel2_t, \
     match, const_map_fn=default_aligner.const_map_fn):
     """
     TODO correct these params
     Input:
       (inst, rel1, rel2) from test amr.get_triples2()
-      gold_inst from gold amr.get_triples2()
       (gold_inst_t, gold_rel1_t, gold_rel2_t) from gold amr2dict()
       match from smatch
       const_map_fn returns a sorted list of gold label matches for a test label
     """
     (self.inst, self.rel1, self.rel2) = (inst, rel1, rel2)
-    self.gold_inst = gold_inst
     (self.gold_inst_t, self.gold_rel1_t, self.gold_rel2_t) = \
       (gold_inst_t, gold_rel1_t, gold_rel2_t)
     self.match = match # test var index -> gold var index
@@ -90,9 +88,9 @@ class SmatchGraph:
         Call only after smatch2graph(). """
     align = []
     for (v, attr) in self.G.nodes(data=True):
-      if not attr['test_name'] and not attr['gold_name']:
+      if attr['test_ind'] < 0 and attr['gold_ind'] < 0:
         continue
-      align.append("%s\t%s\t-\t%s\t%s" % (attr['test_name'], attr['test_label'], attr['gold_name'], attr['gold_label']))
+      align.append("%s\t%s\t-\t%s\t%s" % (attr['test_ind'], attr['test_label'], attr['gold_ind'], attr['gold_label']))
     return align
 
   def add_edge(self, v1, v2, test_lbl, gold_lbl):
@@ -104,32 +102,20 @@ class SmatchGraph:
     elif test_lbl == gold_lbl:
       self.G.add_edge(v1, v2, label=test_lbl, test_label=test_lbl, gold_label=gold_lbl, color=DFLT_COLOR)
 
-  def get_test_name(self, ind):
-    if ind < 0:
-      return ''
-    return self.inst[ind][1]
-
-  def get_gold_name(self, ind):
-    if ind < 0:
-      return ''
-    return self.gold_inst[ind][1]
-
   def add_node(self, v, test_lbl, gold_lbl, test_ind=-1, gold_ind=-1):
     assert(gold_lbl or test_lbl)
-    test_name = self.get_test_name(test_ind)
-    gold_name = self.get_gold_name(gold_ind)
     if gold_lbl == '':
       self.G.add_node(v, label=u'%s / *' % test_lbl, test_label=test_lbl, gold_label=gold_lbl, \
-        test_name=test_name, gold_name=gold_name, color=TEST_COLOR)
+        test_ind=test_ind, gold_ind=gold_ind, color=TEST_COLOR)
     elif test_lbl == '':
       self.G.add_node(v, label=u'* / %s' % gold_lbl, test_label=test_lbl, gold_label=gold_lbl, \
-        test_name=test_name, gold_name=gold_name, color=GOLD_COLOR)
+        test_ind=test_ind, gold_ind=gold_ind, color=GOLD_COLOR)
     elif test_lbl == gold_lbl:
       self.G.add_node(v, label=test_lbl, test_label=test_lbl, gold_label=gold_lbl, \
-        test_name=test_name, gold_name=gold_name, color=DFLT_COLOR)
+        test_ind=test_ind, gold_ind=gold_ind, color=DFLT_COLOR)
     else:
       self.G.add_node(v, label=u'%s / %s' % (test_lbl, gold_lbl), test_label=test_lbl, gold_label=gold_lbl, \
-        test_name=test_name, gold_name=gold_name, color=DFLT_COLOR)
+        test_ind=test_ind, gold_ind=gold_ind, color=DFLT_COLOR)
 
   def add_inst(self, ind, var, instof):
     self.gold_ind[var] = self.match[ind]
