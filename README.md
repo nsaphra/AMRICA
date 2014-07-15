@@ -2,6 +2,99 @@
 
 AMRICA (AMR Inspector for Cross-language Alignments) is a simple tool for aligning and visually representing AMRs [(Banarescu, 2013)](http://www.isi.edu/natural-language/amr/a.pdf), both for bilingual contexts and for monolingual inter-annotator agreement. It is based on and extends the Smatch system [(Cai, 2012)](http://www.newdesign.aclweb.org/anthology-new/P/P13/P13-2131.pdf) for identifying AMR interannotator agreement.
 
+## Getting started
+
+Download the python source from [github](https://github.com/nsaphra/AMRICA).
+
+### Dependencies
+
+We assume you have `pip`. To install the dependencies, just run:
+
+```
+pip install argparse_config networkx pygraphviz pynlpl
+```
+
+`pygraphviz` requires [graphviz](http://www.graphviz.org/) to work. Additionally, to prepare bilingual alignment data you will need [GIZA++](https://code.google.com/p/giza-pp/) and possibly  [JAMR](https://github.com/jflanigan/jamr/).
+
+### Single View Quick Start
+
+```
+./disagree.py -i sample.amr -o sample_out_dir/
+```
+
+### Data Preparation
+
+#### Monolingual AMRICA
+
+To generate visualizations of Smatch alignments, we need an AMR input file with each 
+`::tok` or `::snt` fields containing tokenized sentences, `::id` fields with a sentence ID, and `::annotator` or `::anno` fields with an annotator ID. The annotations for a particular sentence are listed sequentially, and the first annotation is considered the gold standard for visualization purposes.
+
+##### Single AMR View
+
+If you only want to visualize the single annotation per sentence without interannotator agreement, you can use an AMR file with only a single annotator. In this case, annotator and sentence ID fields are optional. The resulting graph will be all black.
+
+### Bilingual AMRICA
+
+For bilingual alignments, we start with two AMR files, one containing the target annotations and one with the source annotations in the same order, with `::tok` and `::id` fields for each annotation. If we want JAMR alignments for either side, we include those in a `::alignments` field.
+
+The sentence alignments should be in the form of two GIZA++ alignment .NBEST files, one source-target and one target-source. To generate these, use the --nbestalignments flag in your GIZA++ config file set to your preferred nbest count.
+
+## Configuration
+
+Flags can be set either at the command line or in a config file. The location of a config file can be set with `-c CONF_FILE` at the command line.
+
+### Common flags
+
+In addition to `--conf_file`, there are several other flags that apply to both monolingual and bilingual text. `--outdir DIR` is the only required one, and specifies the directory to which we will write the image files.
+
+The optional shared flags are:
+* `--verbose` to print out sentences as we align them.
+* `--no-verbose` to override a verbose default setting.
+* `--json FILE.json` to write the alignment graphs to a .json file.
+* `--num_restarts N` to specify the number of random restarts Smatch should execute.
+* `--align_out FILE.csv` to write the alignments to file.
+* `--align_in FILE.csv` to read the alignments from disk instead of running Smatch.
+* '--layout' to modify the layout parameter to graphviz.
+
+The alignment .csv files are in a format where each graph matching set is separated by an empty line, and each line within a set contains either a comment or a line indicating an alignment. For example:
+
+```
+3   它   -   1   it
+2   多长  -   -1
+-1      -    2 take
+```
+
+The tab-separated fields are the test node index (as processed by Smatch), the test node label, the gold node index, and the gold node label.
+
+### Monolingual
+
+Monolingual alignment requires one additional flag, `--infile FILE.amr`, with `FILE.amr` set to the location of the AMR file.
+
+Following is an example config file:
+
+```
+[default]
+infile: data/events_amr.txt
+outdir: data/events_png/
+json: data/events.json
+verbose
+```
+
+### Bilingual
+
+In bilingual alignment, there are more required flags.
+
+* `--src_amr FILE` for the source annotation AMR file.
+* `--tgt_amr FILE` for the target annotation AMR file.
+* `--align_tgt2src FILE.A3.NBEST` for the GIZA++ .NBEST file aligning target-to-source (with target as vcb1), generated with `--nbestalignments N`
+* `--align_src2tgt FILE.A3.NBEST` for the GIZA++ .NBEST file aligning source-to-target (with source as vcb1), generated with `--nbestalignments N`
+
+Now if `--nbestalignments N` was set to be >1, we should specify it with `--num_aligned_in_file`. If we want to count only the top $k$ of those alignments, we set `--num_align_read` as well.
+
+## Endnotes
+
+`--nbestalignments` is a tricky flag to use, because it will only generate on a final alignment run. I could only get it to work with the default GIZA++ settings, myself.
+
 ## How It Works
 
 ### Smatch Classic
@@ -72,86 +165,3 @@ For a pairing considered incompatible:
 * After bilingual smatch, with errors circled:
 
 ![](demo/wb.eng_0003.6.png?raw=true)
-
-
-
-## Getting started
-
-Download the python source from [github](https://github.com/nsaphra/AMRICA).
-
-### Dependencies
-
-The following python packages are required to run AMRICA and can be installed with pip: `networkx`, `argparse`, `argparse_config`, `pygraphviz`.
-
-Additionally, to prepare bilingual alignment data you will need [GIZA++](https://code.google.com/p/giza-pp/) and possibly  [JAMR](https://github.com/jflanigan/jamr/).
-
-### Data Preparation
-
-#### Monolingual AMRICA
-
-To generate visualizations of Smatch alignments, we need an AMR input file with each 
-`::tok` fields containing tokenized sentences, `::id` fields with a sentence ID, and `::anno` fields with an annotator ID. The annotations for a particular sentence are listed sequentially, and the first annotation is considered the gold standard for visualization purposes.
-
-If you only want to visualize the single annotation per sentence, you can use an AMR file with only a single annotator.
-
-### Bilingual AMRICA
-
-For bilingual alignments, we start with two AMR files, one containing the target annotations and one with the source annotations in the same order, with `::tok` and `::id` fields for each annotation. If we want JAMR alignments for either side, we include those in a `::alignments` field.
-
-The sentence alignments should be in the form of two GIZA++ alignment .NBEST files, one source-target and one target-source. To generate these, use the --nbestalignments flag in your GIZA++ config file set to your preferred nbest count.
-
-## Configuration
-
-Flags can be set either at the command line or in a config file. The location of a config file can be set with `-c CONF_FILE` at the command line.
-
-### Common flags
-
-In addition to `--conf_file`, there are several other flags that apply to both monolingual and bilingual text. `--outdir DIR` is the only required one, and specifies the directory to which we will write the image files.
-
-The optional shared flags are:
-* `--verbose` to print out sentences as we align them.
-* `--no-verbose` to override a verbose default setting.
-* `--json FILE.json` to write the alignment graphs to a .json file.
-* `--num_restarts N` to specify the number of random restarts Smatch should execute.
-* `--align_out FILE.csv` to write the alignments to file.
-* `--align_in FILE.csv` to read the alignments from disk instead of running Smatch.
-* '--layout' to modify the layout parameter to graphviz.
-
-The alignment .csv files are in a format where each graph matching set is separated by an empty line, and each line within a set contains either a comment or a line indicating an alignment. For example:
-
-```
-3   它   -   1   it
-2   多长  -   -1
--1      -    2 take
-```
-
-The tab-separated fields are the test node index (as processed by Smatch), the test node label, the gold node index, and the gold node label.
-
-### Monolingual
-
-Monolingual alignment requires one additional flag, `--infile FILE.amr`, with `FILE.amr` set to the location of the AMR file.
-
-Following is an example config file:
-
-```
-[default]
-infile: data/events_amr.txt
-outdir: data/events_png/
-json: data/events.json
-verbose
-```
-
-### Bilingual
-
-In bilingual alignment, there are more required flags.
-
-* `--src_amr FILE` for the source annotation AMR file.
-* `--tgt_amr FILE` for the target annotation AMR file.
-* `--align_tgt2src FILE.A3.NBEST` for the GIZA++ .NBEST file aligning target-to-source (with target as vcb1), generated with `--nbestalignments N`
-* `--align_src2tgt FILE.A3.NBEST` for the GIZA++ .NBEST file aligning source-to-target (with source as vcb1), generated with `--nbestalignments N`
-
-Now if `--nbestalignments N` was set to be >1, we should specify it with `--num_aligned_in_file`. If we want to count only the top $k$ of those alignments, we set `--num_align_read` as well.
-
-## Endnotes
-
-`--nbestalignments` is a tricky flag to use, because it will only generate on a final alignment run. I could only get it to work with the default GIZA++ settings, myself.
