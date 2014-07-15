@@ -149,16 +149,16 @@ def monolingual_main(args):
   cur_id = ""
   while True:
     (amr_line, comments) = amr_metadata.get_amr_line(infile)
-    if amr_line == "":
-      break
-    cur_amr = amr_metadata.AmrMeta.from_parse(amr_line, comments)
-    get_sent_info(cur_amr.metadata)
-    if 'annotator' not in cur_amr.metadata:
-      cur_amr.metadata['annotator'] = ''
-    if not cur_id:
-      cur_id = cur_amr.metadata['id']
+    cur_amr = None
+    if amr_line:
+      cur_amr = amr_metadata.AmrMeta.from_parse(amr_line, comments)
+      get_sent_info(cur_amr.metadata)
+      if 'annotator' not in cur_amr.metadata:
+        cur_amr.metadata['annotator'] = ''
+      if not cur_id:
+        cur_id = cur_amr.metadata['id']
 
-    if cur_id != cur_amr.metadata['id']:
+    if cur_amr is None or cur_id != cur_amr.metadata['id']:
       gold_amr = amrs_same_sent[0]
       test_amrs = amrs_same_sent[1:]
       if len(test_amrs) == 0:
@@ -190,7 +190,10 @@ def monolingual_main(args):
         ag.draw('%s/%s_annotated_%s_%s.png' % (args.outdir, cur_id, gold_anno, test_anno))
 
       amrs_same_sent = []
-      cur_id = cur_amr.metadata['id']
+      if cur_amr is not None:
+        cur_id = cur_amr.metadata['id']
+      else:
+        break
 
     amrs_same_sent.append(cur_amr)
 
