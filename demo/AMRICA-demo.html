@@ -1756,7 +1756,12 @@ div#notebook {
 <p>Flags can be set either at the command line or in a config file. The location of a config file can be set with <code>-c CONF_FILE</code> at the command line.</p>
 <h3 id="common-flags">Common flags</h3>
 <p>In addition to <code>--conf_file</code>, there are several other flags that apply to both monolingual and bilingual text. <code>--outdir DIR</code> is the only required one, and specifies the directory to which we will write the image files.</p>
-<p>The optional shared flags are: * <code>--verbose</code> to print out sentences as we align them. * <code>--no-verbose</code> to override a verbose default setting. * <code>--json FILE.json</code> to write the alignment graphs to a .json file. * <code>--num_restarts N</code> to specify the number of random restarts Smatch should execute.</p>
+<p>The optional shared flags are: * <code>--verbose</code> to print out sentences as we align them. * <code>--no-verbose</code> to override a verbose default setting. * <code>--json FILE.json</code> to write the alignment graphs to a .json file. * <code>--num_restarts N</code> to specify the number of random restarts Smatch should execute. * <code>--align_out FILE.csv</code> to write the alignments to file. * <code>--align_in FILE.csv</code> to read the alignments from disk instead of running Smatch.</p>
+<p>The alignment .csv files are in a format where each graph matching set is separated by an empty line, and each line within a set contains either a comment or a line indicating an alignment. For example:</p>
+<pre><code>3   它   -   1   it
+2   多长  -   -1
+-1      -    2 take</code></pre>
+<p>The tab-separated fields are the test node index (as processed by Smatch), the test node label, the gold node index, and the gold node label.</p>
 <h3 id="monolingual">Monolingual</h3>
 <p>Monolingual alignment requires one additional flag, <code>--infile FILE.amr</code>, with <code>FILE.amr</code> set to the location of the AMR file.</p>
 <p>Following is an example config file:</p>
