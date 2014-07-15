@@ -38,6 +38,8 @@ from compare_smatch import amr_metadata
 from compare_smatch import smatch_graph
 from compare_smatch.smatch_graph import SmatchGraph
 
+cur_sent_id = 0
+
 def hilight_disagreement(test_amrs, gold_amr, iter_num, aligner=default_aligner, gold_aligned_fh=None):
   """
   Input:
@@ -114,6 +116,28 @@ def get_next_gold_alignments(gold_aligned_fh):
   return match
 
 
+def get_sent_info(metadata, dflt_id=None):
+  """ Return ID, sentence if available, and change metadata to reflect """
+  (sent_id, sent) = (None, None)
+  if 'tok' in metadata:
+    sent = metadata['tok']
+  else:
+    sent = metadata['snt']
+
+  if 'id' in metadata:
+    sent_id = metadata['id']
+  elif dflt_id is not None:
+    sent_id = dflt_id
+  else:
+    sent_id = "%d" % cur_sent_id
+    cur_sent_id += 1
+
+  (metadata['id'], metadata['tok']) = \
+    (sent_id, sent)
+
+  return (sent_id, sent)
+
+
 def monolingual_main(args):
   infile = codecs.open(args.infile, encoding='utf8')
   gold_aligned_fh = None
@@ -128,11 +152,11 @@ def monolingual_main(args):
     if amr_line == "":
       break
     cur_amr = amr_metadata.AmrMeta.from_parse(amr_line, comments)
-    assert 'id' in cur_amr.metadata
-    if not cur_id:
-      cur_id = cur_amr.metadata['id']
+    get_sent_info(cur_amr.metadata)
     if 'annotator' not in cur_amr.metadata:
       cur_amr.metadata['annotator'] = ''
+    if not cur_id:
+      cur_id = cur_amr.metadata['id']
 
     if cur_id != cur_amr.metadata['id']:
       gold_amr = amrs_same_sent[0]
@@ -163,7 +187,7 @@ def monolingual_main(args):
         ag = nx.to_agraph(g)
         ag.graph_attr['label'] = sent
         ag.layout(prog='dot')
-        ag.draw('%s/%s_annoted_%s_%s.png' % (args.outdir, cur_id, gold_anno, test_anno))
+        ag.draw('%s/%s_annotated_%s_%s.png' % (args.outdir, cur_id, gold_anno, test_anno))
 
       amrs_same_sent = []
       cur_id = cur_amr.metadata['id']
@@ -195,11 +219,9 @@ def xlang_main(args):
     (tgt_amr_line, tgt_comments) = amr_metadata.get_amr_line(tgt_amr_fh)
     src_amr = amr_metadata.AmrMeta.from_parse(src_amr_line, src_comments, xlang=True)
     tgt_amr = amr_metadata.AmrMeta.from_parse(tgt_amr_line, tgt_comments, xlang=True)
-    assert src_amr.metadata['id'] == tgt_amr.metadata['id']
-    cur_id = src_amr.metadata['id']
-
-    src_sent = src_amr.metadata['tok']
-    tgt_sent = tgt_amr.metadata['tok']
+    (cur_id, src_sent) = get_sent_info(src_amr.metadata)
+    (tgt_id, tgt_sent) = get_sent_info(tgt_amr.metadata, dflt_id=cur_id)
+    assert cur_id == tgt_id
 
     (amr_graphs, smatchgraphs) = hilight_disagreement([tgt_amr], src_amr, args.num_restarts, aligner=aligner, gold_aligned_fh=gold_aligned_fh)
     if json_fh:
