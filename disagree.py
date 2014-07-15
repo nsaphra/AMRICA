@@ -23,20 +23,19 @@ AMR-sentence alignment.
 
 import argparse
 import argparse_config
+import codecs
 import networkx as nx
 from networkx.readwrite import json_graph
 import os
-from compare_smatch.amr_alignment import Amr2AmrAligner
-from compare_smatch.amr_alignment import default_aligner
-from smatch import smatch
-from collections import defaultdict
 import pygraphviz as pgz
-import copy
-from pynlpl.formats.giza import GizaSentenceAlignment
-import codecs
+
+# internal libraries
 from compare_smatch import amr_metadata
 from compare_smatch import smatch_graph
+from compare_smatch.amr_alignment import Amr2AmrAligner
+from compare_smatch.amr_alignment import default_aligner
 from compare_smatch.smatch_graph import SmatchGraph
+from smatch import smatch
 
 cur_sent_id = 0
 

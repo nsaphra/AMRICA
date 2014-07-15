@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 
-from compare_smatch.smatch_graph import SmatchGraph
-from networkx.readwrite import json_graph
 import argparse
 from collections import defaultdict
+from networkx.readwrite import json_graph
 import sys
+
+from compare_smatch.smatch_graph import SmatchGraph
 
 sys.path.append("..")
 

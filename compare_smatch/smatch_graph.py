@@ -5,17 +5,15 @@ Author: Naomi Saphra (nsaphra@jhu.edu)
 Describes a class for building graphs of AMRs with disagreements hilighted.
 """
 
-# TODO deal with constant name dupes
+import copy
 import networkx as nx
-import amr_metadata
+import pygraphviz as pgz
+from pynlpl.formats.giza import GizaSentenceAlignment
+
 from amr_alignment import Amr2AmrAligner
 from amr_alignment import default_aligner
+import amr_metadata
 from smatch import smatch
-from collections import defaultdict
-import pygraphviz as pgz
-import copy
-import ConfigParser
-from pynlpl.formats.giza import GizaSentenceAlignment
 
 GOLD_COLOR = 'blue'
 TEST_COLOR = 'red'

@@ -9,10 +9,9 @@ weighted cross-language Smatch alignment.
 Takes in an output file from GIZA++ (specified in construction functions).
 """
 
-# TODO document
-import re
 from collections import defaultdict
 from pynlpl.formats.giza import GizaSentenceAlignment
+import re
 
 class Amr2AmrAligner(object):
   def __init__(self, num_best=5, num_best_in_file=-1, src2tgt_fh=None, tgt2src_fh=None):

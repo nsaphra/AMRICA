@@ -4,8 +4,9 @@ Author: Naomi Saphra (nsaphra@jhu.edu)
 Read AMR file in while also processing metadata in comments
 """
 
-from smatch.amr import AMR
 import re
+
+from smatch.amr import AMR
 
 class AmrMeta(AMR):
   def __init__(self, var_list=None, var_value_list=None,
