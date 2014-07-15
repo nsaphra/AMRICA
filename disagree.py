@@ -139,6 +139,7 @@ def monolingual_main(args):
       test_amrs = amrs_same_sent[1:]
       if len(test_amrs) == 0:
         test_amrs = [gold_amr] # single AMR view case
+        args.num_restarts = 1 # TODO make single AMR view more efficient
       (amr_graphs, smatchgraphs) = hilight_disagreement(test_amrs, gold_amr, args.num_restarts)
 
       gold_anno = gold_amr.metadata['annotator']
@@ -146,7 +147,6 @@ def monolingual_main(args):
 
       if (args.verbose):
         print("ID: %s\n Sentence: %s\n gold anno: %s" % (cur_id, sent, gold_anno))
-      #raw_input("Press enter to continue: ")
 
       for (a, (g, score)) in zip(test_amrs, amr_graphs):
         test_anno = a.metadata['annotator']
