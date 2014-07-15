@@ -186,7 +186,7 @@ def monolingual_main(args):
 
         ag = nx.to_agraph(g)
         ag.graph_attr['label'] = sent
-        ag.layout(prog='dot')
+        ag.layout(prog=args.layout)
         ag.draw('%s/%s_annotated_%s_%s.png' % (args.outdir, cur_id, gold_anno, test_anno))
 
       amrs_same_sent = []
@@ -238,7 +238,7 @@ def xlang_main(args):
 
     ag = nx.to_agraph(amr_graphs[0][0])
     ag.graph_attr['label'] = "%s\n%s" % (src_sent, tgt_sent)
-    ag.layout(prog='dot')
+    ag.layout(prog=args.layout)
     ag.draw('%s/%s.png' % (args.outdir, cur_id))
 
   src_amr_fh.close()
@@ -278,6 +278,8 @@ if __name__ == '__main__':
     help="Human-readable alignments output file")
   parser.add_argument('--align_in',
     help="Alignments from human-editable text file, as from align_out")
+  parser.add_argument('--layout', default='dot',
+    help='Graphviz output layout')
   # TODO make interactive option and option to process a specific range
 
   args_conf = parser.parse_args()
