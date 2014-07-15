@@ -97,6 +97,9 @@ def get_next_gold_alignments(gold_aligned_fh):
   match_hash = {}
   line = gold_aligned_fh.readline().strip()
   while (line):
+    if line.startswith('#'): # comment line
+      line = gold_aligned_fh.readline().strip()
+      continue
     align = line.split('\t')
     test_ind = int(align[0])
     gold_ind = int(align[3])
@@ -151,6 +154,8 @@ def monolingual_main(args):
           json_fh.write(json_graph.dumps(g) + '\n')
         if align_fh:
           for sg in smatchgraphs:
+            align_fh.write("""# ::id %s\n# ::tok %s\n# ::gold_anno %s\n# ::test_anno %s""" % \
+              (cur_id, sent, gold_anno, test_anno))
             align_fh.write('\n'.join(sg.get_text_alignments()) + '\n\n')
         if (args.verbose):
           print("  annotator %s score: %d" % (test_anno, score))
@@ -200,6 +205,7 @@ def xlang_main(args):
     if json_fh:
       json_fh.write(json_graph.dumps(amr_graphs[0]) + '\n')
     if align_fh:
+      align_fh.write("""# ::id %s\n# ::src_snt %s\n# ::tgt_snt %s\n""" % (cur_id, src_sent, tgt_sent))
       align_fh.write('\n'.join(smatchgraphs[0].get_text_alignments()) + '\n\n')
     if (args.verbose):
       print("ID: %s\n Sentence: %s\n Sentence: %s\n Score: %f" % (cur_id, src_sent, tgt_sent, amr_graphs[0][1]))
