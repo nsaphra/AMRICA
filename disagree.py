@@ -47,6 +47,7 @@ def hilight_disagreement(test_amrs, gold_amr, iter_num, aligner=default_aligner)
   """
 
   amr_graphs = []
+  smatchgraphs = []
   gold_label=u'b'
   gold_amr.rename_node(gold_label)
   (gold_inst, gold_rel1, gold_rel2) = gold_amr.get_triples2()
@@ -63,20 +64,34 @@ def hilight_disagreement(test_amrs, gold_amr, iter_num, aligner=default_aligner)
       node_weight_fn=aligner.node_weight_fn, edge_weight_fn=aligner.edge_weight_fn,
       iter_num=iter_num)
 
-    disagreement = SmatchGraph(test_inst, test_rel1, test_rel2, \
+    disagreement = SmatchGraph(test_inst, test_rel1, test_rel2, gold_inst, \
       gold_inst_t, gold_rel1_t, gold_rel2_t, \
-      best_match, const_map_fn=aligner.const_map_fn, prebuilt_tables=True)
+      best_match, const_map_fn=aligner.const_map_fn)
     amr_graphs.append((disagreement.smatch2graph(node_weight_fn=aligner.node_weight_fn,
                                                  edge_weight_fn=aligner.edge_weight_fn),
       best_match_num))
-  return amr_graphs
+    smatchgraphs.append(disagreement)
+  return (amr_graphs, smatchgraphs)
+
+
+def open_output_files(args):
+  json_fh = None
+  if args.json_out:
+    json_fh = codecs.open(args.json_out, 'w', encoding='utf8')
+  align_fh = None
+  if args.align_out:
+    align_fh =  codecs.open(args.align_out, 'w', encoding='utf8')
+  return (json_fh, align_fh)
+
+
+def close_output_files(json_fh, align_fh):
+  json_fh and json_fh.close()
+  align_fh and align_fh.close()
 
 
 def monolingual_main(args):
   infile = codecs.open(args.infile, encoding='utf8')
-  json_fh = None
-  if args.json:
-    json_fh = codecs.open(args.json, 'w', encoding='utf8')
+  (json_fh, align_fh) = open_output_files(args)
 
   amrs_same_sent = []
   cur_id = ""
@@ -96,7 +111,7 @@ def monolingual_main(args):
       test_amrs = amrs_same_sent[1:]
       if len(test_amrs) == 0:
         test_amrs = [gold_amr] # single AMR view case
-      amr_graphs = hilight_disagreement(test_amrs, gold_amr, args.num_restarts)
+      (amr_graphs, smatchgraphs) = hilight_disagreement(test_amrs, gold_amr, args.num_restarts)
 
       gold_anno = gold_amr.metadata['annotator']
       sent = gold_amr.metadata['tok']
@@ -109,6 +124,9 @@ def monolingual_main(args):
         test_anno = a.metadata['annotator']
         if json_fh:
           json_fh.write(json_graph.dumps(g) + '\n')
+        if align_fh:
+          for sg in smatchgraphs:
+            align_fh.write('\n'.join(sg.get_text_alignments()) + '\n\n')
         if (args.verbose):
           print("  annotator %s score: %d" % (test_anno, score))
 
@@ -123,8 +141,7 @@ def monolingual_main(args):
     amrs_same_sent.append(cur_amr)
 
   infile.close()
-  if json_fh:
-    json_fh.close()
+  close_output_files(json_fh, align_fh)
 
 
 def xlang_main(args):
@@ -134,9 +151,7 @@ def xlang_main(args):
   src2tgt_fh = codecs.open(args.align_src2tgt, encoding='utf8')
   tgt2src_fh = codecs.open(args.align_tgt2src, encoding='utf8')
 
-  json_fh = None
-  if args.json:
-    json_fh = codecs.open(args.json, 'w', encoding='utf8')
+  (json_fh, align_fh) = open_output_files(args)
 
   amrs_same_sent = []
   aligner = Amr2AmrAligner(num_best=args.num_align_read, num_best_in_file=args.num_aligned_in_file, src2tgt_fh=src2tgt_fh, tgt2src_fh=tgt2src_fh)
@@ -153,9 +168,11 @@ def xlang_main(args):
     src_sent = src_amr.metadata['tok']
     tgt_sent = tgt_amr.metadata['tok']
 
-    amr_graphs = hilight_disagreement([tgt_amr], src_amr, args.num_restarts, aligner=aligner)
+    (amr_graphs, smatchgraphs) = hilight_disagreement([tgt_amr], src_amr, args.num_restarts, aligner=aligner)
     if json_fh:
-          json_fh.write(json_graph.dumps(amr_graphs[0]) + '\n')
+      json_fh.write(json_graph.dumps(amr_graphs[0]) + '\n')
+    if align_fh:
+      align_fh.write('\n'.join(smatchgraphs[0].get_text_alignments()) + '\n\n')
     if (args.verbose):
       print("ID: %s\n Sentence: %s\n Sentence: %s\n Score: %f" % (cur_id, src_sent, tgt_sent, amr_graphs[0][1]))
     #raw_input("Press enter to continue: ")
@@ -169,8 +186,7 @@ def xlang_main(args):
   tgt_amr_fh.close()
   src2tgt_fh.close()
   tgt2src_fh.close()
-  if json_fh:
-    json_fh.close()
+  close_output_files(json_fh, align_fh)
 
 
 if __name__ == '__main__':
@@ -194,10 +210,12 @@ if __name__ == '__main__':
     help='N to read from GIZA NBEST file.')
   parser.add_argument('--num_aligned_in_file', type=int, default=1,
     help='N printed to GIZA NBEST file.')
-  parser.add_argument('-j', '--json',
+  parser.add_argument('-j', '--json_out',
     help='File to dump json graphs to.')
   parser.add_argument('--num_restarts', type=int, default=5,
     help='Number of random restarts to execute during hill-climbing algorithm.')
+  parser.add_argument('--align_out',
+    help="Human-readable alignments output file")
   # TODO make interactive option and option to process a specific range
 
   args_conf = parser.parse_args()
