@@ -22,6 +22,8 @@ pip install argparse_config networkx pygraphviz pynlpl
 ./disagree.py -i sample.amr -o sample_out_dir/
 ```
 
+This command will read the AMRs in `sample.amr` (separated by empty lines) and put their graphviz visualizations in .png files located in `sample_out_dir/`.
+
 ### Data Preparation
 
 #### Monolingual AMRICA
