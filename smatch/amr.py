@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
 """
+amr.py
+
 This file is from the code for smatch, available at:
 
 http://amr.isi.edu/download/smatch-v1.0.tar.gz

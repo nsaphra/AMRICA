@@ -5,6 +5,11 @@ smatch.py
 
 Author: Shu Cai
 Copyright(c) 2012. All rights reserved.
+
+This file is from the code for smatch, available at:
+
+http://amr.isi.edu/download/smatch-v1.0.tar.gz
+http://amr.isi.edu/smatch-13.pdf
 """
 import codecs
 import sys

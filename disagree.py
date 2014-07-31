@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 """
+disagree.py
+
 Author: Naomi Saphra (nsaphra@jhu.edu)
+Copyright(c) 2014. All rights reserved.
 
 A tool for inspecting AMR data to id patterns of inter-annotator disagreement
 or semantic inequivalence.

@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 """
+smatch_graph.py
+
 Author: Naomi Saphra (nsaphra@jhu.edu)
+Copyright(c) 2014
 
 Describes a class for building graphs of AMRs with disagreements hilighted.
 """

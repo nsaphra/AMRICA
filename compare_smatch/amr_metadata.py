@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 """
+amr_metadata.py
+
 Author: Naomi Saphra (nsaphra@jhu.edu)
+Copyright(c) 2014
+
 Read AMR file in while also processing metadata in comments
 """
 

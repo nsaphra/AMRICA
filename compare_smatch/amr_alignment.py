@@ -1,5 +1,5 @@
 """
-alignments-weight.py
+amr_alignment.py
 
 Author: Naomi Saphra (nsaphra@jhu.edu)
 Copyright(c) 2014

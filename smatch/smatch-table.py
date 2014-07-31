@@ -1,5 +1,14 @@
 #!/usr/bin/env python
 
+"""
+smatch-table.py
+
+This file is from the code for smatch, available at:
+
+http://amr.isi.edu/download/smatch-v1.0.tar.gz
+http://amr.isi.edu/smatch-13.pdf
+"""
+
 import amr
 import sys
 import subprocess
