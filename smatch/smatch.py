@@ -6,6 +6,7 @@ smatch.py
 Author: Shu Cai
 Copyright(c) 2012. All rights reserved.
 """
+import codecs
 import sys
 import os
 import time
@@ -838,12 +839,12 @@ if __name__ == "__main__":
       print >> ERROR_LOG, "Given file", args.f[0], "does not exist"
       exit(1)
     else:
-      file_handle.append(open(args.f[0]))
+      file_handle.append(codecs.open(args.f[0], encoding='utf8'))
     if not os.path.exists(args.f[1]):
       print >> ERROR_LOG, "Given file", args.f[1], "does not exist"
       exit(1)
     else:
-      file_handle.append(open(args.f[1]))
+      file_handle.append(codecs.open(args.f[1], encoding='utf8'))
     args.f = tuple(file_handle)
   else:  # version 2.7
     import argparse
