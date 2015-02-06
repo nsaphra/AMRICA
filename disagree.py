@@ -254,8 +254,10 @@ def xlang_main(args):
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
   parser.add_argument("-c", "--conf_file", help="Specify config file")
-  parser.add_argument('-i', '--infile', help='amr input file')
-  parser.add_argument('-o', '--outdir', help='image output directory')
+  parser.add_argument('-i', '--infile', required=True,
+    help='amr input file')
+  parser.add_argument('-o', '--outdir', required=True,
+    help='Visualization output directory')
   parser.add_argument('-v', '--verbose', action='store_true')
   parser.add_argument('--no-verbose', action='store_true')
   parser.add_argument('-b', '--bitext', action='store_true',
