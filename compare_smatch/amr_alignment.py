@@ -90,7 +90,7 @@ class Amr2AmrAligner(object):
       #TODO make this an RE instead?
       return 1.0
     if tgt.startswith("op") and src.startswith("op"):
-      return 0.9 # frumious hack to favor similar op edges
+      return 0.9 # TODO this is a frumious hack to favor similar op edges
     return 0.0
 
   def get_nbest_alignments(self, fh):
