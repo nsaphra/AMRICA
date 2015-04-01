@@ -247,8 +247,6 @@ def xlang_main(args):
       align_fh.write('\n'.join(smatchgraphs[0].get_text_alignments()) + '\n\n')
     if (args.verbose):
       print("ID: %s\n Sentence: %s\n Sentence: %s\n Score: %f" % (cur_id, src_sent, tgt_sent, amr_graphs[0][1]))
-    #raw_input("Press enter to continue: ")
-    # TODO delete dead code above
 
     ag = nx.to_agraph(amr_graphs[0][0])
     ag.graph_attr['label'] = "%s\n%s" % (src_sent, tgt_sent)
