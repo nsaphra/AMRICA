@@ -17,7 +17,7 @@ class AmrMeta(AMR):
                link_list=None, const_link_list=None, path2label=None,
                base_amr=None, metadata={}):
     if base_amr is None:
-      super(AmrMeta, self).__init__(var_list, var_value_list, 
+      super(AmrMeta, self).__init__(var_list, var_value_list,
                                     link_list, const_link_list, path2label)
     else:
       self.nodes = base_amr.nodes
@@ -30,14 +30,14 @@ class AmrMeta(AMR):
     self.metadata = metadata
 
   @classmethod
-  def from_parse(cls, annotation_line, comment_lines, xlang=False):
+  def from_parse(cls, annotation_line, comment_lines, consts_to_vars=False):
     metadata = {}
     for l in comment_lines:
       matches = re.findall(r'::(\S+)\s(([^:]|:(?!:))+)', l)
       for m in matches:
         metadata[m[0]] = m[1].strip()
 
-    base_amr = AMR.parse_AMR_line(annotation_line, xlang=xlang)
+    base_amr = AMR.parse_AMR_line(annotation_line, consts_to_vars=consts_to_vars)
     return cls(base_amr=base_amr, metadata=metadata)
 
 

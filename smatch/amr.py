@@ -110,8 +110,8 @@ class AMR(object):
     self.__str__()
 
   @staticmethod
-  def parse_AMR_line(line, xlang=False):
-    # set xlang True if you want consts represented as variable nodes with
+  def parse_AMR_line(line, consts_to_vars=False):
+    # set consts_to_vars True if you want consts represented as variable nodes with
     # instance labels
     # significant symbol just encountered: 1 for (, 2 for :, 3 for /
     state = -1
@@ -288,7 +288,7 @@ class AMR(object):
     link_list = []
     const_attr_list = []  # for monolingual mode
 
-    # xlang mode variables
+    # consts_to_vars mode variables
     const_cnt = 0
     const_var_list = []
     const_var_value_list = []
@@ -316,7 +316,7 @@ class AMR(object):
             path2label = remove_from_paths(path_lookup[(v, v2[0], v2[1])])
             continue
 
-          if xlang:
+          if consts_to_vars:
             const_var = '_CONST_%d' % const_cnt
             const_cnt += 1
             var_dict[const_var] = const_lbl
@@ -328,10 +328,10 @@ class AMR(object):
             const_dict[v2[0]] = const_lbl
 
       link_list.append(link_dict)
-      if not xlang:
+      if not consts_to_vars:
         const_attr_list.append(const_dict)
       link_list[0][var_list[0]] = "TOP"
-    if xlang:
+    if consts_to_vars:
       var_list += const_var_list
       var_value_list += const_var_value_list
       link_list += const_link_list

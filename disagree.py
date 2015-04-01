@@ -50,12 +50,12 @@ def hilight_disagreement(test_amrs, gold_amr, iter_num, aligner=default_aligner,
   Returns list of disagreement graphs for each gold-test AMR pair.
   """
 
-  amr_graphs = []
   smatchgraphs = []
   gold_label=u'b'
   gold_amr.rename_node(gold_label)
   (gold_inst, gold_rel1, gold_rel2) = gold_amr.get_triples2()
   (gold_inst_t, gold_rel1_t, gold_rel2_t) = smatch_graph.amr2dict(gold_inst, gold_rel1, gold_rel2)
+  # TODO Also compute the weight score if we read gold alignments in from file
 
   for a in test_amrs:
     aligner.set_amrs(a, gold_amr)
@@ -75,11 +75,19 @@ def hilight_disagreement(test_amrs, gold_amr, iter_num, aligner=default_aligner,
     disagreement = SmatchGraph(test_inst, test_rel1, test_rel2, \
       gold_inst_t, gold_rel1_t, gold_rel2_t, \
       best_match, const_map_fn=aligner.const_map_fn)
-    amr_graphs.append((disagreement.smatch2graph(node_weight_fn=aligner.node_weight_fn,
-                                                 edge_weight_fn=aligner.edge_weight_fn),
-      best_match_num))
-    smatchgraphs.append(disagreement)
-  return (amr_graphs, smatchgraphs)
+    smatchgraphs.append((disagreement, best_match_num))
+  return smatchgraphs
+
+
+def get_disagreement_graphs(smatchgraphs, aligner=default_aligner,
+                            unmatch_dead_nodes=True):
+  if unmatch_dead_nodes:
+    return [(g.smatch2graph(node_weight_fn=aligner.node_weight_fn,
+                            edge_weight_fn=aligner.edge_weight_fn),
+             score) \
+            for (g, score) in smatchgraphs]
+  else:
+    return [(g.smatch2graph(), score) for (g, score) in smatchgraphs]
 
 
 def open_output_files(args):
@@ -111,11 +119,7 @@ def get_next_gold_alignments(gold_aligned_fh):
       match_hash[test_ind] = gold_ind
     line = gold_aligned_fh.readline().strip()
 
-  match = []
-  for (i, (k, v)) in enumerate(sorted(match_hash.items(), key=lambda x: x[0])):
-    assert i == k
-    match.append(v)
-  return match
+  return [v for (k, v) in sorted(match_hash.items())]
 
 
 def get_sent_info(metadata, dflt_id=None):
@@ -141,6 +145,7 @@ def get_sent_info(metadata, dflt_id=None):
 
 
 def monolingual_main(args):
+  """ Disagreement graphs for different annotations of a single sentence. """
   infile = codecs.open(args.infile, encoding='utf8')
   gold_aligned_fh = None
   if args.align_in:
@@ -153,7 +158,8 @@ def monolingual_main(args):
     (amr_line, comments) = amr_metadata.get_amr_line(infile)
     cur_amr = None
     if amr_line:
-      cur_amr = amr_metadata.AmrMeta.from_parse(amr_line, comments)
+      cur_amr = amr_metadata.AmrMeta.from_parse(amr_line, comments,
+      consts_to_vars=(gold_aligned_fh != None or align_fh != None))
       get_sent_info(cur_amr.metadata)
       if 'annotator' not in cur_amr.metadata:
         cur_amr.metadata['annotator'] = ''
@@ -166,23 +172,25 @@ def monolingual_main(args):
       if len(test_amrs) == 0:
         test_amrs = [gold_amr] # single AMR view case
         args.num_restarts = 1 # TODO make single AMR view more efficient
-      (amr_graphs, smatchgraphs) = hilight_disagreement(test_amrs, gold_amr, args.num_restarts)
-
+      smatchgraphs = hilight_disagreement(test_amrs, gold_amr,
+        args.num_restarts, gold_aligned_fh=gold_aligned_fh)
+      amr_graphs = get_disagreement_graphs(smatchgraphs, unmatch_dead_nodes=(gold_aligned_fh == None))
       gold_anno = gold_amr.metadata['annotator']
       sent = gold_amr.metadata['tok']
 
       if (args.verbose):
         print("ID: %s\n Sentence: %s\n gold anno: %s" % (cur_id, sent, gold_anno))
 
-      for (a, (g, score)) in zip(test_amrs, amr_graphs):
+      for (ind, a) in enumerate(test_amrs):
+        (g, score) = amr_graphs[ind]
         test_anno = a.metadata['annotator']
         if json_fh:
           json_fh.write(json_graph.dumps(g) + '\n')
         if align_fh:
-          for sg in smatchgraphs:
-            align_fh.write("""# ::id %s\n# ::tok %s\n# ::gold_anno %s\n# ::test_anno %s""" % \
-              (cur_id, sent, gold_anno, test_anno))
-            align_fh.write('\n'.join(sg.get_text_alignments()) + '\n\n')
+          sg = smatchgraphs[ind][0]
+          align_fh.write("""# ::id %s\n# ::tok %s\n# ::gold_anno %s\n# ::test_anno %s\n""" % \
+            (cur_id, sent, gold_anno, test_anno))
+          align_fh.write('\n'.join(sg.get_text_alignments()) + '\n\n')
         if (args.verbose):
           print("  annotator %s score: %d" % (test_anno, score))
 
@@ -222,13 +230,16 @@ def xlang_main(args):
     if src_amr_line == "":
       break
     (tgt_amr_line, tgt_comments) = amr_metadata.get_amr_line(tgt_amr_fh)
-    src_amr = amr_metadata.AmrMeta.from_parse(src_amr_line, src_comments, xlang=True)
-    tgt_amr = amr_metadata.AmrMeta.from_parse(tgt_amr_line, tgt_comments, xlang=True)
+    src_amr = amr_metadata.AmrMeta.from_parse(src_amr_line, src_comments, consts_to_vars=True)
+    tgt_amr = amr_metadata.AmrMeta.from_parse(tgt_amr_line, tgt_comments, consts_to_vars=True)
     (cur_id, src_sent) = get_sent_info(src_amr.metadata)
     (tgt_id, tgt_sent) = get_sent_info(tgt_amr.metadata, dflt_id=cur_id)
     assert cur_id == tgt_id
 
-    (amr_graphs, smatchgraphs) = hilight_disagreement([tgt_amr], src_amr, args.num_restarts, aligner=aligner, gold_aligned_fh=gold_aligned_fh)
+    smatchgraphs = hilight_disagreement([tgt_amr], src_amr, args.num_restarts, aligner=aligner, gold_aligned_fh=gold_aligned_fh)
+    amr_graphs = get_disagreement_graphs(smatchgraphs, aligner=aligner,
+      unmatch_dead_nodes=(gold_aligned_fh == None))
+
     if json_fh:
       json_fh.write(json_graph.dumps(amr_graphs[0]) + '\n')
     if align_fh:
@@ -237,6 +248,7 @@ def xlang_main(args):
     if (args.verbose):
       print("ID: %s\n Sentence: %s\n Sentence: %s\n Score: %f" % (cur_id, src_sent, tgt_sent, amr_graphs[0][1]))
     #raw_input("Press enter to continue: ")
+    # TODO delete dead code above
 
     ag = nx.to_agraph(amr_graphs[0][0])
     ag.graph_attr['label'] = "%s\n%s" % (src_sent, tgt_sent)
@@ -277,7 +289,7 @@ if __name__ == '__main__':
   parser.add_argument('--num_restarts', type=int, default=5,
     help='Number of random restarts to execute during hill-climbing algorithm.')
   parser.add_argument('--align_out',
-    help="Human-readable alignments output file")
+    help="Human-readable alignments output file - WARNING, will force conversion of const nodes to var nodes for alignment")
   parser.add_argument('--align_in',
     help="Alignments from human-editable text file, as from align_out")
   parser.add_argument('--layout', default='dot',
