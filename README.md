@@ -28,7 +28,7 @@ This command will read the AMRs in `sample.amr` (separated by empty lines) and p
 
 #### Monolingual AMRICA
 
-To generate visualizations of Smatch alignments, we need an AMR input file with each 
+To generate visualizations of Smatch alignments, we need an AMR input file with each
 `::tok` or `::snt` fields containing tokenized sentences, `::id` fields with a sentence ID, and `::annotator` or `::anno` fields with an annotator ID. The annotations for a particular sentence are listed sequentially, and the first annotation is considered the gold standard for visualization purposes.
 
 ##### Single AMR View
@@ -56,14 +56,14 @@ The optional shared flags are:
 * `--num_restarts N` to specify the number of random restarts Smatch should execute.
 * `--align_out FILE.csv` to write the alignments to file.
 * `--align_in FILE.csv` to read the alignments from disk instead of running Smatch.
-* '--layout' to modify the layout parameter to graphviz.
+* `--layout` to modify the layout parameter to graphviz.
 
 The alignment .csv files are in a format where each graph matching set is separated by an empty line, and each line within a set contains either a comment or a line indicating an alignment. For example:
 
 ```
 3   它   -   1   it
 2   多长  -   -1
--1      -    2 take
+-1  -    2  take
 ```
 
 The tab-separated fields are the test node index (as processed by Smatch), the test node label, the gold node index, and the gold node label.

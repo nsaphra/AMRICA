@@ -254,10 +254,8 @@ def xlang_main(args):
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
   parser.add_argument("-c", "--conf_file", help="Specify config file")
-  parser.add_argument('-i', '--infile', required=True,
-    help='amr input file')
-  parser.add_argument('-o', '--outdir', required=True,
-    help='Visualization output directory')
+  parser.add_argument('-i', '--infile', help='amr input file')
+  parser.add_argument('-o', '--outdir', help='Visualization output directory')
   parser.add_argument('-v', '--verbose', action='store_true')
   parser.add_argument('--no-verbose', action='store_true')
   parser.add_argument('-b', '--bitext', action='store_true',
@@ -295,6 +293,9 @@ if __name__ == '__main__':
     args.verbose = False
   if not args.num_align_read:
     args.num_align_read = args.num_aligned_in_file
+
+  if args.infile == None or args.outdir == None:
+    raise parser.error("Both --infile and --outdir are required flags.")
 
   if not os.path.exists(args.outdir):
     os.makedirs(args.outdir)
