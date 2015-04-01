@@ -120,7 +120,7 @@ To avoid local optima, Smatch generally restarts 5 times.
 
 ### AMRICA
 
-For technical details about AMRICA's inner workings, it may be more useful to read our [(NAACL demo paper)](http://speak.clsp.jhu.edu/uploads/publications/papers/1053_pdf.pdf).
+For technical details about AMRICA's inner workings, it may be more useful to read our [NAACL demo paper](http://speak.clsp.jhu.edu/uploads/publications/papers/1053_pdf.pdf).
 
 AMRICA begins by replacing all constant nodes with variable nodes that are instances of the constant's label. This is necessary so we can align the constant nodes as well as the variables. So the only points added to AMRICA score will come from matching variable-variable edges and instance labels.
 
