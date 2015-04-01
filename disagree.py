@@ -56,6 +56,7 @@ def hilight_disagreement(test_amrs, gold_amr, iter_num, aligner=default_aligner,
   (gold_inst, gold_rel1, gold_rel2) = gold_amr.get_triples2()
   (gold_inst_t, gold_rel1_t, gold_rel2_t) = smatch_graph.amr2dict(gold_inst, gold_rel1, gold_rel2)
   # TODO Also compute the weight score if we read gold alignments in from file
+  # TODO This would require me to handle constants when we read from file
 
   for a in test_amrs:
     aligner.set_amrs(a, gold_amr)
