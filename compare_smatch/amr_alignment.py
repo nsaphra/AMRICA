@@ -92,7 +92,7 @@ class Amr2AmrAligner(object):
     src = src_label.lower()
     if tgt == src:
       # operand edges are all equivalent
-      #TODO make this an RE instead?
+      #TODO make the string match a regex instead?
       return 1.0
     if tgt.startswith("op") and src.startswith("op"):
       return 0.9 # TODO this is a frumious hack to favor similar op edges
@@ -179,8 +179,8 @@ def align_label2toks_en(label, sent, weights, toks_to_align):
   default_full: set True to have the default distribution sum to 1 instead of 0
   return list mapping token index to match weight
   """
-  # TODO frumious hack. should set up actual stemmer sometime.
 
+  # TODO frumious hack. should set up actual stemmer sometime.
   lbl = label.lower()
   stem = lbl
   wordnet = re.match("(.+)-\d\d", lbl)
@@ -226,7 +226,6 @@ def align_amr2sent_jamr(amr, sent, jamr_line):
       for t in toks_to_align:
         tokens_remain.discard(t)
 
-  #TODO should really switch from a label-token-label alignment model to node-token-node
   for label in labels_remain:
     if labels_remain[label] > 0:
       align[label] = align_label2toks_en(label, sent, align[label], tokens_remain)
@@ -239,6 +238,10 @@ def align_amr2sent_jamr(amr, sent, jamr_line):
 
 
 def align_sent2sent(tgt_toks, src_toks, alignment_scores):
+  """
+  return list array where entry (i,j) is the likelihood weight of target token i
+  aligning to source token j.
+  """
   z = sum([s for (a,s) in alignment_scores])
   tok_align = [[0.0 for s in src_toks] for t in tgt_toks]
   for (align, score) in alignment_scores:
@@ -253,6 +256,10 @@ def align_sent2sent(tgt_toks, src_toks, alignment_scores):
 
 
 def align_sent2sent_union(tgt_toks, src_toks, src2tgt, tgt2src):
+  """
+  return list array where entry (i,j) is the average likelihood of aligning in each
+  direction
+  """
   src2tgt_align = align_sent2sent(tgt_toks, src_toks, src2tgt)
   tgt2src_align = align_sent2sent(src_toks, tgt_toks, tgt2src)
 
