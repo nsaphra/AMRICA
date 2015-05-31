@@ -29,6 +29,7 @@ class AmrMeta(AMR):
 
     self.metadata = metadata
 
+
   @classmethod
   def from_parse(cls, annotation_line, comment_lines, consts_to_vars=False):
     metadata = {}

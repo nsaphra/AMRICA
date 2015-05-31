@@ -33,6 +33,7 @@ class Amr2AmrAligner(object):
       self.num_best_in_file = num_best
     assert self.num_best_in_file >= self.num_best
 
+
   def set_amrs(self, tgt_amr, src_amr):
     if self.is_default:
       return
@@ -66,6 +67,7 @@ class Amr2AmrAligner(object):
 
     self.node_weight_fn = lambda t,s : self.amr2amr[(t, s)]
 
+
   def const_map_fn(self, const):
     """ Get all const strings from source amr that could map to target const """
     const_matches = [const]
@@ -74,13 +76,16 @@ class Amr2AmrAligner(object):
         const_matches.append(s)
     return sorted(const_matches, key=lambda x: self.node_weight_fn(const, x), reverse=True)
 
+
   @staticmethod
   def dflt_node_weight_fn(tgt_label, src_label):
     return 1.0 if tgt_label.lower() == src_label.lower() else 0.0
 
+
   @staticmethod
   def dflt_edge_weight_fn(tgt_label, src_label):
     return 1.0 if tgt_label.lower() == src_label.lower() else 0.0
+
 
   def xlang_edge_weight_fn(self, tgt_label, src_label):
     tgt = tgt_label.lower()
@@ -92,6 +97,7 @@ class Amr2AmrAligner(object):
     if tgt.startswith("op") and src.startswith("op"):
       return 0.9 # TODO this is a frumious hack to favor similar op edges
     return 0.0
+
 
   def get_nbest_alignments(self, fh):
     """ Read an entry from the giza alignment .A3 NBEST file. """
@@ -140,6 +146,7 @@ def get_all_labels(amr):
     ret += [v for (k,v) in l.items()]
   return ret
 
+
 def align_amr2sent_dflt(amr, sent):
   labels = get_all_labels(amr)
   align = {l:[0.0 for tok in sent] for l in labels}
@@ -156,11 +163,13 @@ def align_amr2sent_dflt(amr, sent):
       align[label][t_ind] = 1.0 / len(matches)
   return align
 
+
 def parse_jamr_alignment(chunk):
   (tok_range, nodes_str) = chunk.split('|')
   (start_tok, end_tok) = tok_range.split('-')
   node_list = nodes_str.split('+')
   return (int(start_tok), int(end_tok), node_list)
+
 
 def align_label2toks_en(label, sent, weights, toks_to_align):
   """
@@ -193,6 +202,7 @@ def align_label2toks_en(label, sent, weights, toks_to_align):
   for t_ind in matches:
     weights[t_ind] += 1.0 / len(matches)
   return weights
+
 
 def align_amr2sent_jamr(amr, sent, jamr_line):
   """
@@ -227,6 +237,7 @@ def align_amr2sent_jamr(amr, sent, jamr_line):
     align[label] = [w/z for w in align[label]]
   return align
 
+
 def align_sent2sent(tgt_toks, src_toks, alignment_scores):
   z = sum([s for (a,s) in alignment_scores])
   tok_align = [[0.0 for s in src_toks] for t in tgt_toks]
@@ -239,6 +250,7 @@ def align_sent2sent(tgt_toks, src_toks, alignment_scores):
     for sourceind, sourcetok in enumerate(src_toks):
       tok_align[targetind][sourceind] /= z
   return tok_align
+
 
 def align_sent2sent_union(tgt_toks, src_toks, src2tgt, tgt2src):
   src2tgt_align = align_sent2sent(tgt_toks, src_toks, src2tgt)
