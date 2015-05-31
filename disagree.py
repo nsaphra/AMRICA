@@ -45,8 +45,9 @@ cur_sent_id = 0
 def hilight_disagreement(test_amrs, gold_amr, iter_num, aligner=default_aligner, gold_aligned_fh=None):
   """
   Input:
-    gold_amr: gold AMR object
     test_amrs: list of AMRs to compare to
+    gold_amr: gold AMR object
+    iter_num: Number of random restarts to use in smatch algorithm.
   Returns list of disagreement graphs for each gold-test AMR pair.
   """
 
