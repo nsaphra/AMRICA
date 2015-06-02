@@ -306,13 +306,12 @@ if __name__ == '__main__':
   if not args.num_align_read:
     args.num_align_read = args.num_aligned_in_file
 
-  if args.infile == None or args.outdir == None:
-    raise parser.error("Both --infile and --outdir are required flags.")
-
   if not os.path.exists(args.outdir):
     os.makedirs(args.outdir)
 
   if (args.bitext):
     xlang_main(args)
   else:
+    if args.infile == None or args.outdir == None:
+      raise parser.error("Both --infile and --outdir are required flags.")
     monolingual_main(args)
