@@ -169,3 +169,9 @@ For a pairing considered incompatible:
 * After bilingual smatch, with errors circled:
 
 ![](demo/wb.eng_0003.6.png?raw=true)
+
+
+
+*This software was developed partly with the support of the National Science Foundation (USA) under awards 1349902 and 0530118.
+The University of Edinburgh is a charitable body, registered in
+Scotland, with registration number SC005336.*
