@@ -196,7 +196,7 @@ def monolingual_main(args):
         if (args.verbose):
           print("  annotator %s score: %d" % (test_anno, score))
 
-        ag = nx.to_agraph(g)
+        ag = nx.drawing.nx_agraph.to_agraph(g)
         ag.graph_attr['label'] = sent
         ag.layout(prog=args.layout)
         ag.draw('%s/%s_annotated_%s_%s.png' % (args.outdir, cur_id, gold_anno, test_anno))
@@ -250,7 +250,7 @@ def xlang_main(args):
     if (args.verbose):
       print("ID: %s\n Sentence: %s\n Sentence: %s\n Score: %f" % (cur_id, src_sent, tgt_sent, amr_graphs[0][1]))
 
-    ag = nx.to_agraph(amr_graphs[0][0])
+    ag = nx.drawing.nx_agraph.to_agraph(amr_graphs[0][0])
     ag.graph_attr['label'] = "%s\n%s" % (src_sent, tgt_sent)
     ag.layout(prog=args.layout)
     ag.draw('%s/%s.png' % (args.outdir, cur_id))
