@@ -2,19 +2,21 @@
 
 AMRICA (AMR Inspector for Cross-language Alignments) is a simple tool for aligning and visually representing AMRs [(Banarescu, 2013)](http://www.isi.edu/natural-language/amr/a.pdf), both for bilingual contexts and for monolingual inter-annotator agreement. It is based on and extends the Smatch system [(Cai, 2012)](http://www.newdesign.aclweb.org/anthology-new/P/P13/P13-2131.pdf) for identifying AMR interannotator agreement.
 
+It is also possible to use AMRICA to visualize manual alignments you have edited or compiled yourself (see common flags).
+
 ## Getting started
 
 Download the python source from [github](https://github.com/nsaphra/AMRICA).
 
 ### Dependencies
 
-We assume you have `pip`. To install the dependencies, just run:
+We assume you have `pip`. To install the dependencies (assuming you already have graphviz dependencies mentioned below), just run:
 
 ```
-pip install argparse_config networkx pygraphviz pynlpl
+pip install argparse_config networkx==1.8 pygraphviz pynlpl
 ```
 
-`pygraphviz` requires [graphviz](http://www.graphviz.org/) to work. Additionally, to prepare bilingual alignment data you will need [GIZA++](https://code.google.com/p/giza-pp/) and possibly  [JAMR](https://github.com/jflanigan/jamr/).
+`pygraphviz` requires [graphviz](http://www.graphviz.org/) to work. On Linux, you may have to install `graphviz libgraphviz-dev pkg-config`. Additionally, to prepare bilingual alignment data you will need [GIZA++](https://code.google.com/p/giza-pp/) and possibly  [JAMR](https://github.com/jflanigan/jamr/).
 
 ### Single View Quick Start
 
