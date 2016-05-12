@@ -2,7 +2,7 @@
 
 AMRICA (AMR Inspector for Cross-language Alignments) is a simple tool for aligning and visually representing AMRs [(Banarescu, 2013)](http://www.isi.edu/natural-language/amr/a.pdf), both for bilingual contexts and for monolingual inter-annotator agreement. It is based on and extends the Smatch system [(Cai, 2012)](http://www.newdesign.aclweb.org/anthology-new/P/P13/P13-2131.pdf) for identifying AMR interannotator agreement.
 
-It is also possible to use AMRICA to visualize manual alignments you have edited or compiled yourself (see common flags).
+It is also possible to use AMRICA to visualize manual alignments you have edited or compiled yourself (see [Common Flags](###common-flags)).
 
 ## Getting started
 
