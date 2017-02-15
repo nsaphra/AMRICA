@@ -127,6 +127,7 @@ def get_next_gold_alignments(gold_aligned_fh):
 def get_sent_info(metadata, dflt_id=None):
   """ Return ID, sentence if available, and change metadata to reflect """
   (sent_id, sent) = (None, None)
+  global cur_sent_id
   if 'tok' in metadata:
     sent = metadata['tok']
   else:
