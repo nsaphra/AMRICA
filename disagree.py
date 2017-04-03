@@ -169,7 +169,7 @@ def monolingual_main(args):
       if not cur_id:
         cur_id = cur_amr.metadata['id']
 
-    if cur_amr is None or cur_id != cur_amr.metadata['id']:
+    if cur_amr is None or cur_id != cur_amr.metadata['id'] or (args.singleview and len(amrs_same_sent)):
       gold_amr = amrs_same_sent[0]
       test_amrs = amrs_same_sent[1:]
       if len(test_amrs) == 0:
@@ -295,6 +295,8 @@ if __name__ == '__main__':
     help="Alignments from human-editable text file, as from align_out")
   parser.add_argument('--layout', default='dot',
     help='Graphviz output layout')
+  parser.add_argument('--singleview', action='store_true', 
+                      help='If set, display each AMR in the file individually without alignments')
   # TODO make interactive option and option to process a specific range
 
   args_conf = parser.parse_args()
